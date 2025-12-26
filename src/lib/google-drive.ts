@@ -23,7 +23,6 @@ async function findFolderByName(folderName: string): Promise<string | null> {
   const searchData = await searchResponse.json();
   
   if (searchData.files && searchData.files.length > 0) {
-    console.log(`Found ${searchData.files.length} folder(s) named "${folderName}":`, searchData.files);
     return searchData.files[0].id;
   }
 
@@ -34,7 +33,6 @@ async function findFolderByName(folderName: string): Promise<string | null> {
 async function createFolder(folderName: string, parentFolderId?: string): Promise<string> {
   const accessToken = gapi.client.getToken().access_token;
   
-  console.log(`Creating new folder "${folderName}"${parentFolderId ? ` inside parent ${parentFolderId}` : ' in root'}`);
   
   const metadata: any = {
     name: folderName,
@@ -62,7 +60,6 @@ async function createFolder(folderName: string, parentFolderId?: string): Promis
   }
 
   const createData = await createResponse.json();
-  console.log(`Created folder "${folderName}":`, createData.id);
   return createData.id;
 }
 
@@ -75,7 +72,6 @@ async function getImagesFolderId(): Promise<string> {
     console.warn('No existing "Monthly Expenses" folder found, creating new one');
     monthlyExpensesFolderId = await createFolder('Monthly Expenses');
   } else {
-    console.log('Using existing "Monthly Expenses" folder:', monthlyExpensesFolderId);
   }
   
   // Now find or create "Images" folder inside Monthly Expenses
@@ -94,7 +90,6 @@ async function getImagesFolderId(): Promise<string> {
   if (searchResponse.ok) {
     const searchData = await searchResponse.json();
     if (searchData.files && searchData.files.length > 0) {
-      console.log('Using existing "Images" folder:', searchData.files[0].id);
       return searchData.files[0].id;
     }
   }
@@ -187,7 +182,6 @@ async function makeFilePublic(fileId: string): Promise<void> {
     throw new Error(`Failed to make file public: ${response.statusText}`);
   }
 
-  console.log(`File ${fileId} is now public`);
 }
 
 // Helper to convert File to base64
@@ -249,5 +243,4 @@ export async function deleteImageFromDrive(imageUrl: string): Promise<void> {
     throw new Error(`Failed to delete file: ${response.statusText}`);
   }
 
-  console.log('Deleted file from Drive:', fileId);
 }

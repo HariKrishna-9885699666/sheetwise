@@ -52,11 +52,9 @@ export async function initializeGapi(): Promise<void> {
             // Check if token is still valid (not expired)
             if (tokenData.expiry && Date.now() < tokenData.expiry) {
               gapi.client.setToken({ access_token: tokenData.access_token });
-              console.log('Restored token from storage');
             } else {
               // Token expired, remove it
               localStorage.removeItem(TOKEN_STORAGE_KEY);
-              console.log('Stored token expired');
             }
           } catch (e) {
             console.error('Failed to restore token:', e);
@@ -134,7 +132,6 @@ export function signIn(): Promise<void> {
               expiry: expiryTime,
               email: data.email || null,
             }));
-            console.log('Sign in successful, token and email stored');
           })
           .catch(err => {
             console.error('Failed to get email:', err);
@@ -168,7 +165,6 @@ export function signOut(): void {
     const token = gapi?.client?.getToken?.();
     if (token && token.access_token) {
       google.accounts.oauth2.revoke(token.access_token, () => {
-        console.log('Token revoked');
       });
       gapi.client.setToken(null);
     }

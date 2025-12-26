@@ -12,9 +12,10 @@ interface SearchSelectProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  iconMap?: Record<string, any>;
 }
 
-export function SearchSelect({ options, value, onChange, placeholder }: SearchSelectProps) {
+export function SearchSelect({ options, value, onChange, placeholder, iconMap }: SearchSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const filtered = options.filter((option) =>
@@ -41,19 +42,25 @@ export function SearchSelect({ options, value, onChange, placeholder }: SearchSe
             />
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
-              {filtered.map((option) => (
-                <CommandItem
-                  key={option}
-                  value={option}
-                  onSelect={() => {
-                    onChange(option);
-                    setOpen(false);
-                    setSearch("");
-                  }}
-                >
-                  {option}
-                </CommandItem>
-              ))}
+              {filtered.map((option) => {
+                const Icon = iconMap?.[option];
+                return (
+                  <CommandItem
+                    key={option}
+                    value={option}
+                    onSelect={() => {
+                      onChange(option);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    {Icon && (
+                      <Icon className="h-4 w-4 mr-2" />
+                    )}
+                    {option}
+                  </CommandItem>
+                );
+              })}
             </CommandList>
           </Command>
         </div>

@@ -13,13 +13,46 @@ import * as sheetsApi from "@/lib/google-sheets";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { CATEGORIES } from "@/types/transaction";
-import { XCircle, Wallet, Plus, ChevronDown } from "lucide-react";
+import { 
+  XCircle, 
+  Wallet, 
+  Plus, 
+  ChevronDown,
+  UtensilsCrossed,
+  Car,
+  ShoppingBag,
+  Popcorn,
+  Zap,
+  Heart,
+  GraduationCap,
+  Plane,
+  Briefcase,
+  TrendingUp as TrendingUpIcon,
+  Gift as GiftIcon,
+  MoreHorizontal,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+
+const categoryIcons: Record<string, any> = {
+  "Food & Dining": UtensilsCrossed,
+  Transportation: Car,
+  Shopping: ShoppingBag,
+  Entertainment: Popcorn,
+  "Bills & Utilities": Zap,
+  Healthcare: Heart,
+  Education: GraduationCap,
+  Travel: Plane,
+  Salary: Wallet,
+  Freelance: Briefcase,
+  Investment: TrendingUpIcon,
+  Gift: GiftIcon,
+  Other: MoreHorizontal,
+};
 
 const Index = () => {
   const { toast } = useToast();
@@ -36,7 +69,6 @@ const Index = () => {
     isLoading,
     userEmail,
   } = useTransactions();
-  console.log("transactions", transactions);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
@@ -122,7 +154,7 @@ const Index = () => {
     } else {
       addTransaction(data);
       toast({
-        title: <span className="flex items-center gap-2 text-green-700"><Wallet className="h-5 w-5" /> Transaction added</span>,
+        title: "Transaction added",
         description: "Your transaction has been recorded.",
       });
     }
@@ -169,6 +201,13 @@ const Index = () => {
 
       <main className="container px-4 py-8 md:px-6">
         <div className="space-y-4 md:space-y-8">
+          {/* Header with Month */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-foreground">
+              Expenses for {currentMonth}
+            </h1>
+          </div>
+
           {isLoading ? (
             <div className="grid grid-cols-2 gap-2 sm:gap-4">
               {[1, 2].map((i) => (
@@ -213,9 +252,17 @@ const Index = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
+                    {CATEGORIES.map(cat => {
+                      const Icon = categoryIcons[cat];
+                      return (
+                        <SelectItem key={cat} value={cat}>
+                          <div className="flex items-center gap-2">
+                            {Icon && <Icon className="h-4 w-4" />}
+                            {cat}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <Select value={sort} onValueChange={setSort}>
@@ -255,9 +302,17 @@ const Index = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
+                    {CATEGORIES.map(cat => {
+                      const Icon = categoryIcons[cat];
+                      return (
+                        <SelectItem key={cat} value={cat}>
+                          <div className="flex items-center gap-2">
+                            {Icon && <Icon className="h-4 w-4" />}
+                            {cat}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <button

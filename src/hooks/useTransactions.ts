@@ -133,7 +133,6 @@ export function useTransactions() {
         // Check if month tab exists, create if it doesn't
         const tabExists = await sheetsApi.monthTabExists(currentMonth);
         if (!tabExists) {
-          console.log(`Creating new month tab: ${currentMonth}`);
           await sheetsApi.createMonthTab(currentMonth);
           // New tab will be empty, so set empty transactions
           setTransactions(prev => ({
@@ -151,7 +150,6 @@ export function useTransactions() {
         }
         setUseLocalData(false);
       } catch (error: any) {
-        console.log("Error loading from Google Sheets:", error);
         // Only show toast for real errors, not auth issues
         if (error?.message && !error.message.includes('Not authenticated')) {
           toast.error("Failed to load data from Google Sheets");
@@ -183,7 +181,6 @@ export function useTransactions() {
           setTransactions(prev => ({ ...prev, ...tabData }));
         }
       } catch (error) {
-        console.log("Could not load sheet tabs:", error);
       }
     };
 
@@ -360,7 +357,6 @@ export function useTransactions() {
       if (targetTransaction?.image) {
         try {
           await deleteImageFromDrive(targetTransaction.image);
-          console.log('Deleted image from Drive during transaction deletion');
         } catch (error) {
           console.warn('Failed to delete image from Drive:', error);
           // Continue with transaction deletion even if image deletion fails

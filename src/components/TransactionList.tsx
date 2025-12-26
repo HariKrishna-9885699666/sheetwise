@@ -4,6 +4,19 @@ import {
   TrendingUp,
   Image as ImageIcon,
   Calendar,
+  UtensilsCrossed,
+  Car,
+  ShoppingBag,
+  Popcorn,
+  Zap,
+  Heart,
+  GraduationCap,
+  Plane,
+  Wallet,
+  Briefcase,
+  TrendingUpIcon,
+  Gift as GiftIcon,
+  MoreHorizontal,
 } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { formatCurrency } from "@/lib/format-currency";
@@ -27,20 +40,20 @@ interface TransactionListProps {
   onDelete: (id: string) => void;
 }
 
-const categoryColors: Record<string, { bg: string; text: string }> = {
-  "Food & Dining": { bg: "bg-orange-100", text: "text-orange-700" },
-  Transportation: { bg: "bg-blue-100", text: "text-blue-700" },
-  Shopping: { bg: "bg-pink-100", text: "text-pink-700" },
-  Entertainment: { bg: "bg-purple-100", text: "text-purple-700" },
-  "Bills & Utilities": { bg: "bg-slate-100", text: "text-slate-700" },
-  Healthcare: { bg: "bg-red-100", text: "text-red-700" },
-  Education: { bg: "bg-indigo-100", text: "text-indigo-700" },
-  Travel: { bg: "bg-cyan-100", text: "text-cyan-700" },
-  Salary: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  Freelance: { bg: "bg-teal-100", text: "text-teal-700" },
-  Investment: { bg: "bg-amber-100", text: "text-amber-700" },
-  Gift: { bg: "bg-rose-100", text: "text-rose-700" },
-  Other: { bg: "bg-gray-100", text: "text-gray-700" },
+const categoryColors: Record<string, { bg: string; text: string; icon: any }> = {
+  "Food & Dining": { bg: "bg-orange-100", text: "text-orange-700", icon: UtensilsCrossed },
+  Transportation: { bg: "bg-blue-100", text: "text-blue-700", icon: Car },
+  Shopping: { bg: "bg-pink-100", text: "text-pink-700", icon: ShoppingBag },
+  Entertainment: { bg: "bg-purple-100", text: "text-purple-700", icon: Popcorn },
+  "Bills & Utilities": { bg: "bg-slate-100", text: "text-slate-700", icon: Zap },
+  Healthcare: { bg: "bg-red-100", text: "text-red-700", icon: Heart },
+  Education: { bg: "bg-indigo-100", text: "text-indigo-700", icon: GraduationCap },
+  Travel: { bg: "bg-cyan-100", text: "text-cyan-700", icon: Plane },
+  Salary: { bg: "bg-emerald-100", text: "text-emerald-700", icon: Wallet },
+  Freelance: { bg: "bg-teal-100", text: "text-teal-700", icon: Briefcase },
+  Investment: { bg: "bg-amber-100", text: "text-amber-700", icon: TrendingUpIcon },
+  Gift: { bg: "bg-rose-100", text: "text-rose-700", icon: GiftIcon },
+  Other: { bg: "bg-gray-100", text: "text-gray-700", icon: MoreHorizontal },
 };
 
 // Group transactions by date
@@ -123,7 +136,9 @@ export function TransactionList({
                   const colors = categoryColors[transaction.category] || {
                     bg: "bg-gray-100",
                     text: "text-gray-700",
+                    icon: MoreHorizontal,
                   };
+                  const CategoryIcon = colors.icon;
                   const transactionDate = new Date(transaction.date);
                   const isEditable = transactionDate >= tenDaysAgo;
                   
@@ -140,11 +155,12 @@ export function TransactionList({
                             <Badge
                               variant="secondary"
                               className={cn(
-                                "font-medium border-0 w-fit text-xs",
+                                "font-medium border-0 w-fit text-xs flex items-center gap-1.5",
                                 colors.bg,
                                 colors.text
                               )}
                             >
+                              <CategoryIcon className="h-3 w-3" />
                               {transaction.category}
                             </Badge>
                             <p className="text-sm text-muted-foreground truncate">
@@ -202,11 +218,12 @@ export function TransactionList({
                           <Badge
                             variant="secondary"
                             className={cn(
-                              "font-medium border-0",
+                              "font-medium border-0 flex items-center gap-1.5 w-fit",
                               colors.bg,
                               colors.text
                             )}
                           >
+                            <CategoryIcon className="h-3.5 w-3.5" />
                             {transaction.category}
                           </Badge>
                         </div>

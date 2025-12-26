@@ -3,8 +3,25 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { Bus, Receipt, Utensils } from "lucide-react";
+import { 
+  CalendarIcon,
+  Bus,
+  Receipt,
+  Utensils,
+  UtensilsCrossed,
+  Car,
+  ShoppingBag,
+  Popcorn,
+  Zap,
+  Heart,
+  GraduationCap,
+  Plane,
+  Wallet,
+  Briefcase,
+  TrendingUp as TrendingUpIcon,
+  Gift as GiftIcon,
+  MoreHorizontal,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Transaction, CATEGORIES, ACCOUNTS } from "@/types/transaction";
 import { Button } from "@/components/ui/button";
@@ -41,6 +58,22 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const categoryIcons: Record<string, any> = {
+  "Food & Dining": UtensilsCrossed,
+  Transportation: Car,
+  Shopping: ShoppingBag,
+  Entertainment: Popcorn,
+  "Bills & Utilities": Zap,
+  Healthcare: Heart,
+  Education: GraduationCap,
+  Travel: Plane,
+  Salary: Wallet,
+  Freelance: Briefcase,
+  Investment: TrendingUpIcon,
+  Gift: GiftIcon,
+  Other: MoreHorizontal,
+};
 
 interface TransactionFormProps {
   open: boolean;
@@ -153,7 +186,6 @@ export function TransactionForm({
         if (oldImageUrl && isEditing) {
           try {
             await deleteImageFromDrive(oldImageUrl);
-            console.log('Deleted old image from Drive');
           } catch (error) {
             console.warn('Failed to delete old image:', error);
             // Continue even if deletion fails
@@ -328,6 +360,7 @@ export function TransactionForm({
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Select category"
+                      iconMap={categoryIcons}
                     />
                     <FormMessage />
                   </FormItem>
