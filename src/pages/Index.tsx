@@ -6,6 +6,7 @@ import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionForm } from "@/components/TransactionForm";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { ProfileModal } from "@/components/ProfileModal";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -422,6 +423,9 @@ const Index = () => {
         <Plus className="h-6 w-6" />
         <span className="text-lg font-semibold">Add Transaction</span>
       </button>
+
+      {/* Profile Modal */}
+      <ProfileModal />
     </div>
   );
 };
