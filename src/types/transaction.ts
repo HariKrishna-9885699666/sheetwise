@@ -2,10 +2,10 @@ export interface Transaction {
   id: string;
   date: string; // ISO date string
   expense: number | null;
-  income: number | null;
   category: string;
   account: string;
   notes: string;
+  image?: string; // base64 or URL
   createdAt: string;
   updatedAt: string;
   deleted: boolean;
@@ -29,6 +29,7 @@ export const CATEGORIES = [
   "Freelance",
   "Investment",
   "Gift",
+  "To Parents",
   "Other",
 ] as const;
 

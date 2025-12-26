@@ -60,10 +60,18 @@ export function getPreviousMonth(tabName: string): string {
 
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
+  // Validate date before formatting
+  if (isNaN(d.getTime())) {
+    return 'Invalid Date';
+  }
   return format(d, "MMM d, yyyy");
 }
 
 export function formatDateShort(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
+  // Validate date before formatting
+  if (isNaN(d.getTime())) {
+    return 'Invalid Date';
+  }
   return format(d, "MMM d");
 }

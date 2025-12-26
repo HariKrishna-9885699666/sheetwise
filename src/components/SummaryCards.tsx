@@ -1,18 +1,14 @@
-import { TrendingUp, TrendingDown, Wallet, ArrowUpDown } from "lucide-react";
+import { TrendingDown, ArrowUpDown } from "lucide-react";
 import { formatCurrency } from "@/lib/format-currency";
 import { cn } from "@/lib/utils";
 
 interface SummaryCardsProps {
-  income: number;
   expense: number;
-  balance: number;
   transactionCount: number;
 }
 
 export function SummaryCards({
-  income,
   expense,
-  balance,
   transactionCount,
 }: SummaryCardsProps) {
   const cards = [
@@ -25,14 +21,6 @@ export function SummaryCards({
       format: formatCurrency,
     },
     {
-      title: "Net Balance",
-      value: balance,
-      icon: Wallet,
-      colorClass: balance >= 0 ? "text-income" : "text-expense",
-      bgClass: balance >= 0 ? "bg-income-light" : "bg-expense-light",
-      format: (v: number) => (v >= 0 ? "+" : "") + formatCurrency(v),
-    },
-    {
       title: "Transactions",
       value: transactionCount,
       icon: ArrowUpDown,
@@ -43,7 +31,7 @@ export function SummaryCards({
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2">
       {cards.map((card, index) => (
         <div
           key={card.title}

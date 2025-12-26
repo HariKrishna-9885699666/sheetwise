@@ -1,23 +1,14 @@
-import { useState } from "react";
-import { format } from "date-fns";
 import {
-  MoreHorizontal,
   Pencil,
   Trash2,
   TrendingUp,
-  TrendingDown,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { formatCurrency } from "@/lib/format-currency";
 import { formatDateShort } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -55,9 +46,8 @@ export function TransactionList({
   onEdit,
   onDelete,
 }: TransactionListProps) {
-  const sortedTransactions = [...transactions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const totalExpenses = transactions.reduce((sum, t) => sum + (t.expense || 0), 0);
+  console.log("totalExpenses", transactions);
 
   if (transactions.length === 0) {
     return (
@@ -75,6 +65,18 @@ export function TransactionList({
 
   return (
     <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
+      {/* Total Expenses at Top */}
+      {transactions.length > 0 && (
+        <div className="border-b-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold text-gray-700">TOTAL EXPENSES</span>
+            <span className="text-2xl font-bold text-orange-600">
+              {formatCurrency(totalExpenses)}
+            </span>
+          </div>
+        </div>
+      )}
+      
       <Table>
         <TableHeader>
           <TableRow className="border-border hover:bg-transparent">
@@ -82,19 +84,23 @@ export function TransactionList({
             <TableHead className="font-semibold">Category</TableHead>
             <TableHead className="font-semibold">Account</TableHead>
             <TableHead className="font-semibold">Notes</TableHead>
+            <TableHead className="font-semibold">Image</TableHead>
             <TableHead className="text-right font-semibold">Expense</TableHead>
-            <TableHead className="text-right font-semibold">Income</TableHead>
-            <TableHead className="w-[60px]"></TableHead>
+            <TableHead className="text-center font-semibold w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedTransactions.map((transaction, index) => {
+          {transactions.map((transaction, index) => {
             const colors = categoryColors[transaction.category] || {
               bg: "bg-gray-100",
               text: "text-gray-700",
             };
-            const isIncome = transaction.income && transaction.income > 0;
-
+            // Check if transaction is within last 10 days
+            const transactionDate = new Date(transaction.date);
+            const today = new Date();
+            const tenDaysAgo = new Date(today);
+            tenDaysAgo.setDate(today.getDate() - 10);
+            const isEditable = transactionDate >= tenDaysAgo;
             return (
               <TableRow
                 key={transaction.id}
@@ -122,6 +128,19 @@ export function TransactionList({
                 <TableCell className="max-w-[200px] truncate text-muted-foreground">
                   {transaction.notes || "—"}
                 </TableCell>
+                <TableCell className="text-center">
+                  {transaction.image ? (
+                    <button 
+                      onClick={() => window.open(transaction.image, '_blank')}
+                      className="inline-flex items-center justify-center p-2 rounded hover:bg-accent transition-colors"
+                      title="Open image in new tab"
+                    >
+                      <ImageIcon className="h-5 w-5 text-muted-foreground hover:text-primary" />
+                    </button>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   {transaction.expense ? (
                     <span className="font-mono font-medium text-expense">
@@ -131,46 +150,45 @@ export function TransactionList({
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
-                  {transaction.income ? (
-                    <span className="font-mono font-medium text-income">
-                      +{formatCurrency(transaction.income)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                <TableCell className="text-center">
+                  {isEditable ? (
+                    <div className="flex items-center justify-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8"
+                        onClick={() => onEdit(transaction)}
                       >
-                        <MoreHorizontal className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover">
-                      <DropdownMenuItem onClick={() => onEdit(transaction)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => onDelete(transaction.id)}
-                        className="text-destructive focus:text-destructive"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
                 </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
+      {transactions.length > 0 && (
+        <div className="border-t-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold text-gray-700">TOTAL EXPENSES</span>
+            <span className="text-2xl font-bold text-orange-600">
+              {formatCurrency(totalExpenses)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

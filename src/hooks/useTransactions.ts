@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Transaction } from "@/types/transaction";
 import { getMonthTabName, getCurrentMonthTab } from "@/lib/date-utils";
 import * as sheetsApi from "@/lib/google-sheets";
+import { deleteImageFromDrive } from "@/lib/google-drive";
 import { toast } from "sonner";
 
 // Generate a simple unique ID
@@ -15,23 +16,11 @@ const generateDemoData = (): Record<string, Transaction[]> => {
   const now = new Date();
   
   const demoTransactions: Transaction[] = [
-    {
-      id: generateId(),
-      date: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
-      expense: null,
-      income: 85000,
-      category: "Salary",
-      account: "Bank Account",
-      notes: "Monthly salary",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deleted: false,
-    },
+
     {
       id: generateId(),
       date: new Date(now.getFullYear(), now.getMonth(), 3).toISOString(),
       expense: 2500,
-      income: null,
       category: "Food & Dining",
       account: "Credit Card",
       notes: "Grocery shopping at Big Bazaar",
@@ -43,7 +32,6 @@ const generateDemoData = (): Record<string, Transaction[]> => {
       id: generateId(),
       date: new Date(now.getFullYear(), now.getMonth(), 5).toISOString(),
       expense: 1200,
-      income: null,
       category: "Transportation",
       account: "UPI",
       notes: "Uber rides this week",
@@ -51,23 +39,11 @@ const generateDemoData = (): Record<string, Transaction[]> => {
       updatedAt: new Date().toISOString(),
       deleted: false,
     },
-    {
-      id: generateId(),
-      date: new Date(now.getFullYear(), now.getMonth(), 8).toISOString(),
-      expense: null,
-      income: 15000,
-      category: "Freelance",
-      account: "Bank Account",
-      notes: "Website design project",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deleted: false,
-    },
+
     {
       id: generateId(),
       date: new Date(now.getFullYear(), now.getMonth(), 10).toISOString(),
       expense: 3500,
-      income: null,
       category: "Bills & Utilities",
       account: "Bank Account",
       notes: "Electricity and internet bill",
@@ -79,7 +55,6 @@ const generateDemoData = (): Record<string, Transaction[]> => {
       id: generateId(),
       date: new Date(now.getFullYear(), now.getMonth(), 15).toISOString(),
       expense: 8500,
-      income: null,
       category: "Shopping",
       account: "Credit Card",
       notes: "New clothes from Myntra",
@@ -100,10 +75,10 @@ function sheetRowToTransaction(row: sheetsApi.SheetRow): Transaction {
     id: row.id,
     date: row.date,
     expense: row.expense || null,
-    income: row.income || null,
     category: row.category,
     account: row.account,
     notes: row.notes,
+    image: row.image,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deleted: false,
@@ -115,6 +90,7 @@ export function useTransactions() {
   const [currentMonth, setCurrentMonth] = useState<string>(getCurrentMonthTab());
   const [isLoading, setIsLoading] = useState(false);
   const [useLocalData, setUseLocalData] = useState(true); // Fallback to local when API not configured
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [gapiReady, setGapiReady] = useState(false);
 
   // Initialize Google API
@@ -129,6 +105,12 @@ export function useTransactions() {
         await sheetsApi.initializeGapi();
         sheetsApi.initializeGis();
         setGapiReady(true);
+        
+        // Fetch user email if signed in
+        if (sheetsApi.isSignedIn()) {
+          const email = await sheetsApi.getUserEmail();
+          setUserEmail(email);
+        }
       } catch (error) {
         console.error('Failed to initialize Google API:', error);
         setUseLocalData(true);
@@ -217,18 +199,12 @@ export function useTransactions() {
   }, [transactions]);
 
   const summary = useMemo(() => {
-    const income = currentMonthTransactions.reduce(
-      (sum, t) => sum + (t.income || 0),
-      0
-    );
     const expense = currentMonthTransactions.reduce(
       (sum, t) => sum + (t.expense || 0),
       0
     );
     return {
-      income,
       expense,
-      balance: income - expense,
       transactionCount: currentMonthTransactions.length,
     };
   }, [currentMonthTransactions]);
@@ -243,10 +219,10 @@ export function useTransactions() {
           const sheetRow = await sheetsApi.addTransaction(monthTab, {
             date: data.date,
             expense: data.expense || 0,
-            income: data.income || 0,
             category: data.category,
             account: data.account,
             notes: data.notes || "",
+            image: data.image || "",
           });
           
           const newTransaction = sheetRowToTransaction(sheetRow);
@@ -319,7 +295,6 @@ export function useTransactions() {
             await sheetsApi.addTransaction(newMonth, {
               date: updatedTransaction.date,
               expense: updatedTransaction.expense || 0,
-              income: updatedTransaction.income || 0,
               category: updatedTransaction.category,
               account: updatedTransaction.account,
               notes: updatedTransaction.notes || "",
@@ -330,7 +305,6 @@ export function useTransactions() {
               id,
               date: updatedTransaction.date,
               expense: updatedTransaction.expense || 0,
-              income: updatedTransaction.income || 0,
               category: updatedTransaction.category,
               account: updatedTransaction.account,
               notes: updatedTransaction.notes || "",
@@ -371,13 +345,27 @@ export function useTransactions() {
 
   const deleteTransaction = useCallback(
     async (id: string) => {
-      // Find which month the transaction is in
+      // Find which month the transaction is in and get the transaction
       let targetMonth: string | null = null;
+      let targetTransaction: Transaction | null = null;
       Object.entries(transactions).forEach(([month, txns]) => {
-        if (txns.find((t) => t.id === id)) {
+        const found = txns.find((t) => t.id === id);
+        if (found) {
           targetMonth = month;
+          targetTransaction = found;
         }
       });
+
+      // Delete image from Drive if it exists
+      if (targetTransaction?.image) {
+        try {
+          await deleteImageFromDrive(targetTransaction.image);
+          console.log('Deleted image from Drive during transaction deletion');
+        } catch (error) {
+          console.warn('Failed to delete image from Drive:', error);
+          // Continue with transaction deletion even if image deletion fails
+        }
+      }
 
       if (!useLocalData && targetMonth) {
         try {
@@ -416,5 +404,6 @@ export function useTransactions() {
     updateTransaction,
     deleteTransaction,
     isConnected: sheetsApi.isApiConfigured && sheetsApi.isSignedIn() && !useLocalData,
+    userEmail,
   };
 }

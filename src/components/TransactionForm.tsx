@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, TrendingDown, TrendingUp } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
+import { Bus, Receipt, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Transaction, CATEGORIES, ACCOUNTS } from "@/types/transaction";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { uploadImageToDrive, deleteImageFromDrive } from "@/lib/google-drive";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -23,28 +27,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SearchSelect } from "@/components/ui/search-select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
-  type: z.enum(["expense", "income"]),
   date: z.date({ required_error: "Date is required" }),
   amount: z.number({ required_error: "Amount is required" }).positive("Amount must be positive"),
   category: z.string().min(1, "Category is required"),
   account: z.string().min(1, "Account is required"),
   notes: z.string().optional(),
+  image: z.string().optional(), // Will store Drive URL instead of base64
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -63,62 +56,140 @@ export function TransactionForm({
   onSubmit,
 }: TransactionFormProps) {
   const isEditing = !!transaction;
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: "expense",
       date: new Date(),
       amount: undefined,
       category: "",
-      account: "",
+      account: "Savings",
       notes: "",
     },
   });
 
-  const transactionType = form.watch("type");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (transaction) {
       form.reset({
-        type: transaction.income ? "income" : "expense",
         date: new Date(transaction.date),
-        amount: transaction.income || transaction.expense || 0,
+        amount: transaction.expense || 0,
         category: transaction.category,
         account: transaction.account,
         notes: transaction.notes || "",
+        image: transaction.image || undefined,
       });
+      setImagePreview(transaction.image || null);
     } else {
       form.reset({
-        type: "expense",
         date: new Date(),
         amount: undefined,
         category: "",
-        account: "",
+        account: "Savings",
         notes: "",
+        image: undefined,
       });
+      setImagePreview(null);
     }
   }, [transaction, form]);
 
-  const handleSubmit = (values: FormValues) => {
-    const data = {
-      date: values.date.toISOString(),
-      expense: values.type === "expense" ? values.amount : null,
-      income: values.type === "income" ? values.amount : null,
-      category: values.category,
-      account: values.account,
-      notes: values.notes || "",
+  // Image resize and validation
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      form.setError("image", { message: "Image must be less than 1MB" });
+      return;
+    }
+    
+    // Resize image for preview only
+    const img = new window.Image();
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (!ev.target?.result) return;
+      img.onload = () => {
+        // Resize for preview
+        const canvas = document.createElement("canvas");
+        const maxDim = 600;
+        let w = img.width, h = img.height;
+        if (w > h) {
+          if (w > maxDim) { h *= maxDim / w; w = maxDim; }
+        } else {
+          if (h > maxDim) { w *= maxDim / h; h = maxDim; }
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          const base64 = canvas.toDataURL("image/jpeg", 0.85);
+          setImagePreview(base64);
+          setSelectedFile(file); // Store original file for upload
+        }
+      };
+      img.src = ev.target.result as string;
     };
-
-    onSubmit(data);
-    onOpenChange(false);
-    form.reset();
+    reader.readAsDataURL(file);
   };
 
-  const incomeCategories = ["Salary", "Freelance", "Investment", "Gift", "Other"];
-  const expenseCategories = CATEGORIES.filter((c) => !incomeCategories.includes(c));
-  const currentCategories =
-    transactionType === "income" ? incomeCategories : expenseCategories;
+  const handleSubmit = async (values: FormValues) => {
+    setIsUploading(true);
+    try {
+      let imageUrl = values.image || "";
+      const oldImageUrl = transaction?.image; // Store old image URL for deletion
+      
+      // If there's a new file selected, upload it to Drive
+      if (selectedFile) {
+        toast({
+          title: "Uploading image...",
+          description: "Please wait while we upload your receipt to Google Drive.",
+        });
+        
+        // Delete old image if it exists and we're replacing it
+        if (oldImageUrl && isEditing) {
+          try {
+            await deleteImageFromDrive(oldImageUrl);
+            console.log('Deleted old image from Drive');
+          } catch (error) {
+            console.warn('Failed to delete old image:', error);
+            // Continue even if deletion fails
+          }
+        }
+        
+        imageUrl = await uploadImageToDrive(selectedFile);
+      }
+
+      const data = {
+        date: format(values.date, "yyyy-MM-dd"),
+        expense: values.amount,
+        category: values.category,
+        account: values.account,
+        notes: values.notes || "",
+        image: imageUrl,
+      };
+      
+      onSubmit(data);
+      onOpenChange(false);
+      form.reset();
+      setImagePreview(null);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image to Google Drive. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const currentCategories = CATEGORIES;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -127,40 +198,14 @@ export function TransactionForm({
           <DialogTitle className="text-xl">
             {isEditing ? "Edit Transaction" : "Add Transaction"}
           </DialogTitle>
+          <DialogDescription>
+            {isEditing ? "Update your transaction details below." : "Add a new expense transaction."}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <Tabs
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="w-full"
-                  >
-                    <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted">
-                      <TabsTrigger
-                        value="expense"
-                        className="gap-2 data-[state=active]:bg-expense-light data-[state=active]:text-expense-foreground"
-                      >
-                        <TrendingDown className="h-4 w-4" />
-                        Expense
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="income"
-                        className="gap-2 data-[state=active]:bg-income-light data-[state=active]:text-income-foreground"
-                      >
-                        <TrendingUp className="h-4 w-4" />
-                        Income
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                </FormItem>
-              )}
-            />
+            {/* Only expense transactions allowed. No type/tabs. */}
 
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -194,6 +239,12 @@ export function TransactionForm({
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus
+                          disabled={(date) => {
+                            const tenDaysAgo = new Date();
+                            tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+                            tenDaysAgo.setHours(0, 0, 0, 0);
+                            return date < tenDaysAgo;
+                          }}
                           className="pointer-events-auto"
                         />
                       </PopoverContent>
@@ -207,7 +258,7 @@ export function TransactionForm({
                 control={form.control}
                 name="amount"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Amount (₹)</FormLabel>
                     <FormControl>
                       <Input
@@ -236,20 +287,48 @@ export function TransactionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-popover">
-                        {currentCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {/* Quick-select icons */}
+                    <div className="flex gap-2 mb-2">
+                      <Button
+                        type="button"
+                        variant={field.value === "Transportation" ? "default" : "outline"}
+                        size="icon"
+                        className={field.value === "Transportation" ? "bg-blue-100 text-blue-700 border-blue-200" : ""}
+                        onClick={() => field.onChange("Transportation")}
+                        title="Transportation"
+                        aria-label="Transportation"
+                      >
+                        <Bus className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={field.value === "Bills & Utilities" ? "default" : "outline"}
+                        size="icon"
+                        className={field.value === "Bills & Utilities" ? "bg-slate-100 text-slate-700 border-slate-200" : ""}
+                        onClick={() => field.onChange("Bills & Utilities")}
+                        title="Bills & Utilities"
+                        aria-label="Bills & Utilities"
+                      >
+                        <Receipt className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={field.value === "Food & Dining" ? "default" : "outline"}
+                        size="icon"
+                        className={field.value === "Food & Dining" ? "bg-orange-100 text-orange-700 border-orange-200" : ""}
+                        onClick={() => field.onChange("Food & Dining")}
+                        title="Food & Dining"
+                        aria-label="Food & Dining"
+                      >
+                        <Utensils className="h-5 w-5" />
+                      </Button>
+                    </div>
+                    <SearchSelect
+                      options={currentCategories}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select category"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -261,20 +340,12 @@ export function TransactionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Account</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select account" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-popover">
-                        {ACCOUNTS.map((account) => (
-                          <SelectItem key={account} value={account}>
-                            {account}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SearchSelect
+                      options={ACCOUNTS}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select account"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -300,16 +371,86 @@ export function TransactionForm({
               )}
             />
 
+            {/* Image upload */}
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Receipt/Image (optional)</FormLabel>
+                  <FormControl>
+                    <div className="flex flex-col gap-2">
+                      {imagePreview && (
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="max-h-32 rounded border object-contain"
+                        />
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-fit"
+                      >
+                        {imagePreview ? "Change Image" : "Upload Image"}
+                      </Button>
+                      {imagePreview && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={async () => {
+                            // If editing and there's an existing Drive image, delete it
+                            if (isEditing && transaction?.image && !selectedFile) {
+                              try {
+                                await deleteImageFromDrive(transaction.image);
+                                toast({
+                                  title: "Image removed",
+                                  description: "The image has been deleted from Google Drive.",
+                                });
+                              } catch (error) {
+                                console.error('Failed to delete image:', error);
+                                toast({
+                                  title: "Warning",
+                                  description: "Failed to delete image from Drive, but it will be removed from the transaction.",
+                                  variant: "destructive",
+                                });
+                              }
+                            }
+                            setImagePreview(null);
+                            setSelectedFile(null);
+                            form.setValue("image", undefined, { shouldValidate: true });
+                          }}
+                          className="w-fit text-xs text-muted-foreground"
+                        >
+                          Remove Image
+                        </Button>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="flex gap-3 justify-end pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={isUploading}
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                {isEditing ? "Save Changes" : "Add Transaction"}
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? "Uploading..." : isEditing ? "Save Changes" : "Add Transaction"}
               </Button>
             </div>
           </form>

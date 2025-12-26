@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Transaction } from "@/types/transaction";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Header } from "@/components/Header";
@@ -6,9 +6,14 @@ import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionForm } from "@/components/TransactionForm";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { ApiStatusBanner } from "@/components/ApiStatusBanner";
 import { useToast } from "@/hooks/use-toast";
-import { isApiConfigured } from "@/lib/google-sheets";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import * as sheetsApi from "@/lib/google-sheets";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { CATEGORIES } from "@/types/transaction";
+import { XCircle, Wallet, Plus } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -22,8 +27,10 @@ const Index = () => {
     updateTransaction,
     deleteTransaction,
     isConnected,
+    isLoading,
+    userEmail,
   } = useTransactions();
-
+  console.log("transactions", transactions);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
@@ -31,6 +38,43 @@ const Index = () => {
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
     null
   );
+
+  // Search, filter, sort state
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState("date-desc");
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setCategory("all");
+    setSort("date-desc");
+  };
+
+  // Filtered and sorted transactions
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+    if (search.trim()) {
+      const s = search.trim().toLowerCase();
+      filtered = filtered.filter(t =>
+        t.notes.toLowerCase().includes(s) ||
+        t.category.toLowerCase().includes(s) ||
+        t.account.toLowerCase().includes(s)
+      );
+    }
+    if (category && category !== "all") {
+      filtered = filtered.filter(t => t.category === category);
+    }
+    if (sort === "date-desc") {
+      filtered = filtered.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } else if (sort === "date-asc") {
+      filtered = filtered.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    } else if (sort === "amount-desc") {
+      filtered = filtered.slice().sort((a, b) => (b.expense || 0) - (a.expense || 0));
+    } else if (sort === "amount-asc") {
+      filtered = filtered.slice().sort((a, b) => (a.expense || 0) - (b.expense || 0));
+    }
+    return filtered;
+  }, [transactions, search, category, sort]);
 
   const handleAddTransaction = () => {
     setEditingTransaction(null);
@@ -71,8 +115,34 @@ const Index = () => {
     } else {
       addTransaction(data);
       toast({
-        title: "Transaction added",
+        title: <span className="flex items-center gap-2 text-green-700"><Wallet className="h-5 w-5" /> Transaction added</span>,
         description: "Your transaction has been recorded.",
+      });
+    }
+  };
+
+  const handleSignOut = () => {
+    sheetsApi.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out from Google Sheets.",
+    });
+    window.location.reload(); // Reload to reset state
+  };
+
+  const handleSignIn = async () => {
+    try {
+      await sheetsApi.signIn();
+      toast({
+        title: "Connected",
+        description: "Successfully connected to Google Sheets.",
+      });
+      window.location.reload(); // Reload to fetch data
+    } catch (error) {
+      toast({
+        title: "Connection failed",
+        description: "Could not connect to Google Sheets. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -85,28 +155,137 @@ const Index = () => {
         onMonthChange={setCurrentMonth}
         onAddTransaction={handleAddTransaction}
         isConnected={isConnected}
+        userEmail={userEmail}
+        onSignOut={handleSignOut}
+        onSignIn={handleSignIn}
       />
 
       <main className="container px-4 py-8 md:px-6">
         <div className="space-y-8">
-          <ApiStatusBanner />
-          
-          <SummaryCards
-            expense={summary.expense}
-            balance={summary.balance}
-            transactionCount={summary.transactionCount}
-          />
+          {isLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[1, 2].map((i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-6 shadow-card">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-8 w-32" />
+                    </div>
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <SummaryCards
+              expense={summary.expense}
+              transactionCount={summary.transactionCount}
+            />
+          )}
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recent Transactions</h2>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2 items-stretch sm:items-center justify-between">
+              <div className="flex flex-col sm:flex-row flex-1 gap-2 min-w-0">
+                <Input
+                  placeholder="Search notes, category, account..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="max-w-xs w-full"
+                />
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {CATEGORIES.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="sm:ml-1 flex items-center justify-center rounded-full border border-border bg-background p-2 text-muted-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring min-w-[56px]"
+                  title="Reset filters"
+                  aria-label="Reset filters"
+                >
+                  <span className="sm:hidden text-xs font-medium">Reset</span>
+                  <span className="hidden sm:inline"><XCircle className="h-5 w-5" /></span>
+                </button>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Select value={sort} onValueChange={setSort}>
+                  <SelectTrigger className="w-full sm:w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">Newest First</SelectItem>
+                    <SelectItem value="date-asc">Oldest First</SelectItem>
+                    <SelectItem value="amount-desc">Amount High-Low</SelectItem>
+                    <SelectItem value="amount-asc">Amount Low-High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <TransactionList
-              transactions={transactions}
-              onEdit={handleEditTransaction}
-              onDelete={handleDeleteClick}
-            />
+            {isLoading ? (
+              <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
+                {/* Skeleton Total Expenses Header */}
+                <div className="border-b-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-7 w-40" />
+                    <Skeleton className="h-8 w-32" />
+                  </div>
+                </div>
+                
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="w-[100px] font-semibold">Date</TableHead>
+                      <TableHead className="font-semibold">Category</TableHead>
+                      <TableHead className="font-semibold">Account</TableHead>
+                      <TableHead className="font-semibold">Notes</TableHead>
+                      <TableHead className="font-semibold">Image</TableHead>
+                      <TableHead className="text-right font-semibold">Expense</TableHead>
+                      <TableHead className="text-center font-semibold w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {[...Array(5)].map((_, i) => (
+                      <TableRow key={i} className="border-border">
+                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-5 w-5 mx-auto" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto" /></TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Skeleton className="h-8 w-8" />
+                            <Skeleton className="h-8 w-8" />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                
+                {/* Skeleton Total Expenses Footer */}
+                <div className="border-t-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-7 w-40" />
+                    <Skeleton className="h-8 w-32" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <TransactionList
+                transactions={filteredTransactions}
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteClick}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -123,6 +302,15 @@ const Index = () => {
         onOpenChange={setDeleteConfirmOpen}
         onConfirm={handleConfirmDelete}
       />
+
+      {/* Floating Action Button for Mobile */}
+      <button
+        onClick={handleAddTransaction}
+        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+      >
+        <Plus className="h-6 w-6" />
+        <span className="text-lg font-semibold">Add Transaction</span>
+      </button>
     </div>
   );
 };
