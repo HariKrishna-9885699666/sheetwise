@@ -121,7 +121,8 @@ export function signIn(): Promise<void> {
         });
         
         // Get user email and store with token
-        const expiryTime = Date.now() + (response.expires_in || 3600) * 1000;
+        // Set expiry to 30 days from now instead of token expiry
+        const expiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days in milliseconds
         
         // Fetch user email from tokeninfo
         fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${response.access_token}`)
@@ -150,8 +151,9 @@ export function signIn(): Promise<void> {
     };
 
     // Request access token with prompt
+    // Use empty prompt to allow automatic re-authentication if user has valid Google session
     try {
-      tokenClient.requestAccessToken({ prompt: 'consent' });
+      tokenClient.requestAccessToken({ prompt: '' });
     } catch (error) {
       console.error('Failed to request access token:', error);
       reject(error);
@@ -173,6 +175,35 @@ export function signOut(): void {
   } catch (error) {
     console.error('Sign out failed:', error);
   }
+}
+
+// Silent token renewal - attempts to refresh token without user interaction
+export async function refreshTokenSilently(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!tokenClient) {
+      console.warn('Token client not initialized');
+      resolve(false);
+      return;
+    }
+
+    // Check if there's a stored token that's about to expire (within 5 minutes)
+    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (storedToken) {
+      const tokenData = JSON.parse(storedToken);
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      
+      // If token expires in less than 5 minutes, try to renew
+      if (tokenData.expiry - now < fiveMinutes) {
+        console.log('Token expiring soon, attempting silent renewal...');
+        tokenClient.requestAccessToken({ prompt: '' });
+        resolve(true);
+        return;
+      }
+    }
+    
+    resolve(false);
+  });
 }
 
 // Check if user is signed in
@@ -293,6 +324,9 @@ export async function readMonthData(monthName: string): Promise<SheetRow[]> {
   if (!isApiConfigured || !isSignedIn()) {
     throw new Error("Not authenticated");
   }
+  
+  // Try to refresh token if it's about to expire
+  await refreshTokenSilently();
   
   try {
     const response = await gapi.client.sheets.spreadsheets.values.get({

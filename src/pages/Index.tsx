@@ -200,17 +200,24 @@ const Index = () => {
         onSignIn={handleSignIn}
       />
 
-      <main className="container px-4 py-8 md:px-6">
-        <div className="space-y-4 md:space-y-8">
+      <main className="container px-4 py-4 md:py-8 md:px-6">
+        <div className="space-y-2 md:space-y-8">
           {/* Header with Month */}
-          <div className="flex items-center justify-between">
+          <div className="hidden md:flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-foreground">
+              Expenses for {currentMonth}
+            </h1>
+          </div>
+          
+          {/* Mobile: Centered Month Header */}
+          <div className="md:hidden flex items-center justify-center">
+            <h1 className="text-xl font-semibold text-foreground">
               Expenses for {currentMonth}
             </h1>
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+            <div className="hidden md:grid grid-cols-2 gap-2 sm:gap-4">
               {[1, 2].map((i) => (
                 <div key={i} className="rounded-xl border border-border bg-card p-3 sm:p-6 shadow-card">
                   <div className="flex items-start justify-between">
@@ -224,11 +231,13 @@ const Index = () => {
               ))}
             </div>
           ) : (
-            <SummaryCards
-              expense={summary.expense}
-              transactionCount={summary.transactionCount}
-              currentMonth={currentMonth}
-            />
+            <div className="hidden md:block">
+              <SummaryCards
+                expense={summary.expense}
+                transactionCount={summary.transactionCount}
+                currentMonth={currentMonth}
+              />
+            </div>
           )}
 
           <div className="space-y-4">
