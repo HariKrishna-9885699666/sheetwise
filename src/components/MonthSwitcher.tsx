@@ -148,7 +148,11 @@ export function MonthSwitcher({
             <SelectTrigger className="h-7 md:h-8 w-[90px] md:w-[120px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0">
               <SelectValue>{months[currentMonthNum].label}</SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-popover">
+            <SelectContent 
+              className="bg-popover !min-w-0 !w-[calc(100vw-2rem)] sm:!w-[var(--radix-select-trigger-width)]" 
+              position="popper"
+              align="center"
+            >
               {months.map((month) => (
                 <SelectItem key={month.value} value={month.value.toString()}>
                   {month.label}
@@ -161,7 +165,11 @@ export function MonthSwitcher({
             <SelectTrigger className="h-7 md:h-8 w-[60px] md:w-[80px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0">
               <SelectValue>{currentYear}</SelectValue>
             </SelectTrigger>
-            <SelectContent className="bg-popover">
+            <SelectContent 
+              className="bg-popover !min-w-0 !w-[calc(100vw-2rem)] sm:!w-[var(--radix-select-trigger-width)]" 
+              position="popper"
+              align="center"
+            >
               {years.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}

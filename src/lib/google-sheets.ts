@@ -312,7 +312,19 @@ export async function readMonthData(monthName: string): Promise<SheetRow[]> {
     return rows.slice(1)
       .filter((row: any[]) => {
         // Filter out total row (last column contains "TOTAL")
-        return !(row[8] && row[8].toString().toUpperCase().includes('TOTAL'));
+        if (row[8] && row[8].toString().toUpperCase().includes('TOTAL')) {
+          return false;
+        }
+        // Filter out rows without ID or valid date
+        if (!row[0] || !row[1]) {
+          return false;
+        }
+        // Validate date is not empty or "Invalid Date"
+        const testDate = new Date(row[1]);
+        if (isNaN(testDate.getTime())) {
+          return false;
+        }
+        return true;
       })
       .map((row: any[]) => ({
         id: row[0] || "",

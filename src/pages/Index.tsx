@@ -13,7 +13,13 @@ import * as sheetsApi from "@/lib/google-sheets";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { CATEGORIES } from "@/types/transaction";
-import { XCircle, Wallet, Plus } from "lucide-react";
+import { XCircle, Wallet, Plus, ChevronDown } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { toast } = useToast();
@@ -43,6 +49,7 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("date-desc");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleResetFilters = () => {
     setSearch("");
@@ -161,17 +168,17 @@ const Index = () => {
       />
 
       <main className="container px-4 py-8 md:px-6">
-        <div className="space-y-8">
+        <div className="space-y-4 md:space-y-8">
           {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
               {[1, 2].map((i) => (
-                <div key={i} className="rounded-xl border border-border bg-card p-6 shadow-card">
+                <div key={i} className="rounded-xl border border-border bg-card p-3 sm:p-6 shadow-card">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-8 w-32" />
+                    <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
+                      <Skeleton className="h-3 sm:h-4 w-16 sm:w-24" />
+                      <Skeleton className="h-4 sm:h-8 w-20 sm:w-32" />
                     </div>
-                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <Skeleton className="h-6 w-6 sm:h-10 sm:w-10 rounded-lg ml-1 sm:ml-0" />
                   </div>
                 </div>
               ))}
@@ -180,11 +187,61 @@ const Index = () => {
             <SummaryCards
               expense={summary.expense}
               transactionCount={summary.transactionCount}
+              currentMonth={currentMonth}
             />
           )}
 
           <div className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2 items-stretch sm:items-center justify-between">
+            {/* Mobile: Collapsible Filters */}
+            <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className="md:hidden">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>Filters & Sort</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-2">
+                <Input
+                  placeholder="Search notes, category, account..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full"
+                />
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {CATEGORIES.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sort} onValueChange={setSort}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">Newest First</SelectItem>
+                    <SelectItem value="date-asc">Oldest First</SelectItem>
+                    <SelectItem value="amount-desc">Amount High-Low</SelectItem>
+                    <SelectItem value="amount-asc">Amount Low-High</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={handleResetFilters}
+                  className="w-full"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reset Filters
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Desktop: Original Layout */}
+            <div className="hidden md:flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-2 items-stretch sm:items-center justify-between">
               <div className="flex flex-col sm:flex-row flex-1 gap-2 min-w-0">
                 <Input
                   placeholder="Search notes, category, account..."
@@ -210,8 +267,7 @@ const Index = () => {
                   title="Reset filters"
                   aria-label="Reset filters"
                 >
-                  <span className="sm:hidden text-xs font-medium">Reset</span>
-                  <span className="hidden sm:inline"><XCircle className="h-5 w-5" /></span>
+                  <XCircle className="h-5 w-5" />
                 </button>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
