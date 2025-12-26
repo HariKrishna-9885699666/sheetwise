@@ -46,9 +46,11 @@ export function Header({
           {/* Hamburger Menu - Mobile Only */}
           <SheetComponent open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-16 w-16 md:hidden">
-                <Menu className="h-10 w-10" />
-              </Button>
+              <button className="flex flex-col gap-1.5 p-3 md:hidden hover:bg-accent rounded-md transition-colors">
+                <div className="w-8 h-1 bg-foreground rounded-full"></div>
+                <div className="w-8 h-1 bg-foreground rounded-full"></div>
+                <div className="w-8 h-1 bg-foreground rounded-full"></div>
+              </button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] sm:w-[350px]">
               <SheetHeader>
@@ -134,17 +136,6 @@ export function Header({
                     )}
                   </div>
                 </div>
-
-                {/* Month Selector */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Select Month</h3>
-                  <MonthSwitcher
-                    currentMonth={currentMonth}
-                    monthTabs={monthTabs}
-                    onMonthChange={onMonthChange}
-                    isConnected={isConnected}
-                  />
-                </div>
               </div>
             </SheetContent>
           </SheetComponent>
@@ -171,6 +162,12 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-1.5 md:gap-2">
+          {/* Mobile: Connection Status Indicator */}
+          <div className="md:hidden">
+            <Cloud className={`h-5 w-5 ${isConnected ? 'text-green-500 fill-green-500' : 'text-gray-400 fill-gray-400'}`} 
+                   title={isConnected ? 'Connected' : 'Not Connected'} />
+          </div>
+
           {/* Desktop: Show status badges and buttons */}
           <div className="hidden md:flex md:items-center md:gap-2">
             {isConnected && userEmail && (
