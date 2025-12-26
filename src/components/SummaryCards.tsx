@@ -17,14 +17,6 @@ export function SummaryCards({
 }: SummaryCardsProps) {
   const cards = [
     {
-      title: "Total Income",
-      value: income,
-      icon: TrendingUp,
-      colorClass: "text-income",
-      bgClass: "bg-income-light",
-      format: formatCurrency,
-    },
-    {
       title: "Total Expenses",
       value: expense,
       icon: TrendingDown,

@@ -13,6 +13,7 @@ import {
   getNextMonth,
   getPreviousMonth,
   getCurrentMonthTab,
+  isValidMonthTab,
 } from "@/lib/date-utils";
 
 interface MonthSwitcherProps {
@@ -26,6 +27,9 @@ export function MonthSwitcher({
   monthTabs,
   onMonthChange,
 }: MonthSwitcherProps) {
+  // Filter out invalid month tabs (like "Sheet1", etc.)
+  const validMonthTabs = monthTabs.filter(isValidMonthTab);
+  
   const currentDate = parseMonthTabName(currentMonth);
   const displayName = getMonthDisplayName(currentDate);
   const isCurrentMonth = currentMonth === getCurrentMonthTab();
@@ -59,7 +63,7 @@ export function MonthSwitcher({
             <SelectValue>{displayName}</SelectValue>
           </SelectTrigger>
           <SelectContent className="bg-popover">
-            {monthTabs.map((tab) => (
+            {validMonthTabs.map((tab) => (
               <SelectItem key={tab} value={tab}>
                 {getMonthDisplayName(parseMonthTabName(tab))}
               </SelectItem>

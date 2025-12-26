@@ -1,6 +1,25 @@
 # Sheet Ledger - Expense & Income Tracker
 
-A modern React + Vite web application for managing daily expenses and income with **direct Google Sheets integration**. All transactions are stored in Google Sheets with automatic month-wise tab organization.
+A modern React + Vite web application for managing daily expenses and income with **direct Google Sheets integration** using OAuth for private spreadsheet access.
+
+---
+
+## 🚀 **Quick Setup - OAuth for Private Spreadsheet**
+
+**✨ Your spreadsheet stays PRIVATE - only accessible by you!**
+
+**Setup Instructions:** See `OAUTH_SETUP.txt` for complete step-by-step guide.
+
+**Quick Overview:**
+1. Create Google Cloud project & enable Sheets API
+2. Configure OAuth consent screen
+3. Create OAuth Client ID (Web application)
+4. Create private Google Spreadsheet
+5. Update `.env` with Client ID and Spreadsheet ID
+6. Run `npm run dev`
+7. Sign in with Google to access your private data
+
+---
 
 ## 🌟 Features
 

@@ -1,0 +1,69 @@
+GOOGLE SHEETS OAUTH SETUP (PRIVATE SPREADSHEET)
+================================================
+
+1. CREATE GOOGLE CLOUD PROJECT
+   - Go to: https://console.cloud.google.com/
+   - Click "New Project"
+   - Name: "SheetWise"
+   - Click "Create"
+
+2. ENABLE GOOGLE SHEETS API
+   - Go to: APIs & Services > Library
+   - Search: "Google Sheets API"
+   - Click and Enable it
+
+3. CREATE OAUTH CLIENT ID (IMPORTANT!)
+   - Go to: APIs & Services > Credentials
+   - Click "Configure Consent Screen"
+     * User Type: External
+     * App name: SheetWise
+     * User support email: your@email.com
+     * Developer contact: your@email.com
+     * Click Save and Continue
+     * Scopes: Add "Google Sheets API" (../auth/spreadsheets)
+     * Test users: Add your Google email
+     * Click Save
+
+   - Click "+ CREATE CREDENTIALS" > "OAuth client ID"
+     * Application type: Web application
+     * Name: SheetWise Web Client
+     * Authorized JavaScript origins:
+       - http://localhost:8080
+       - http://localhost:5173
+     * Authorized redirect URIs:
+       - http://localhost:8080
+       - http://localhost:5173
+     * Click Create
+     * COPY the Client ID (looks like: xxxxx.apps.googleusercontent.com)
+
+4. CREATE YOUR PRIVATE SPREADSHEET
+   - Go to: https://sheets.google.com
+   - Create new blank spreadsheet
+   - Name it: "SheetWise Transactions"
+   - Copy the Spreadsheet ID from URL:
+     https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID/edit
+   - Keep it PRIVATE (don't share with anyone)
+
+5. UPDATE .env FILE
+   - Open: .env file in project root
+   - Add:
+     VITE_GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+     VITE_GOOGLE_SPREADSHEET_ID=your_spreadsheet_id
+
+6. START THE APP
+   npm run dev
+
+7. SIGN IN
+   - Open: http://localhost:8080
+   - Click "Sign In with Google"
+   - Choose your Google account
+   - Grant permissions to access Google Sheets
+   - Done! Your private spreadsheet is now connected
+
+SECURITY NOTES:
+- Your spreadsheet stays PRIVATE (only you can access it)
+- OAuth ensures secure access through Google login
+- No need to make spreadsheet public
+- Client ID can be public (it's safe in browser code)
+- Never share your Spreadsheet ID publicly
+

@@ -115,21 +115,65 @@ export function useTransactions() {
   const [currentMonth, setCurrentMonth] = useState<string>(getCurrentMonthTab());
   const [isLoading, setIsLoading] = useState(false);
   const [useLocalData, setUseLocalData] = useState(true); // Fallback to local when API not configured
+  const [gapiReady, setGapiReady] = useState(false);
+
+  // Initialize Google API
+  useEffect(() => {
+    const initGoogleApi = async () => {
+      if (!sheetsApi.isApiConfigured) {
+        setUseLocalData(true);
+        return;
+      }
+
+      try {
+        await sheetsApi.initializeGapi();
+        sheetsApi.initializeGis();
+        setGapiReady(true);
+      } catch (error) {
+        console.error('Failed to initialize Google API:', error);
+        setUseLocalData(true);
+      }
+    };
+
+    initGoogleApi();
+  }, []);
 
   // Load data from Google Sheets when month changes
   useEffect(() => {
     const loadMonthData = async () => {
+      if (!gapiReady || !sheetsApi.isSignedIn()) {
+        setUseLocalData(true);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const sheetData = await sheetsApi.readMonthData(currentMonth);
-        const txns = sheetData.map(sheetRowToTransaction);
-        setTransactions(prev => ({
-          ...prev,
-          [currentMonth]: txns
-        }));
+        // Check if month tab exists, create if it doesn't
+        const tabExists = await sheetsApi.monthTabExists(currentMonth);
+        if (!tabExists) {
+          console.log(`Creating new month tab: ${currentMonth}`);
+          await sheetsApi.createMonthTab(currentMonth);
+          // New tab will be empty, so set empty transactions
+          setTransactions(prev => ({
+            ...prev,
+            [currentMonth]: []
+          }));
+        } else {
+          // Tab exists, load data
+          const sheetData = await sheetsApi.readMonthData(currentMonth);
+          const txns = sheetData.map(sheetRowToTransaction);
+          setTransactions(prev => ({
+            ...prev,
+            [currentMonth]: txns
+          }));
+        }
         setUseLocalData(false);
-      } catch (error) {
-        console.log("Using local demo data (Google Sheets not configured):", error);
+      } catch (error: any) {
+        console.log("Error loading from Google Sheets:", error);
+        // Only show toast for real errors, not auth issues
+        if (error?.message && !error.message.includes('Not authenticated')) {
+          toast.error("Failed to load data from Google Sheets");
+        }
         setUseLocalData(true);
       } finally {
         setIsLoading(false);
@@ -137,11 +181,13 @@ export function useTransactions() {
     };
 
     loadMonthData();
-  }, [currentMonth]);
+  }, [currentMonth, gapiReady]);
 
   // Load available month tabs
   useEffect(() => {
     const loadTabs = async () => {
+      if (!gapiReady || !sheetsApi.isSignedIn()) return;
+
       try {
         const tabs = await sheetsApi.getSheetTabs();
         // Initialize empty arrays for each tab
@@ -160,7 +206,7 @@ export function useTransactions() {
     };
 
     loadTabs();
-  }, []);
+  }, [gapiReady]);
 
   const currentMonthTransactions = useMemo(() => {
     return (transactions[currentMonth] || []).filter((t) => !t.deleted);
@@ -369,5 +415,6 @@ export function useTransactions() {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    isConnected: sheetsApi.isApiConfigured && sheetsApi.isSignedIn() && !useLocalData,
   };
 }

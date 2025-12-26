@@ -21,6 +21,7 @@ const Index = () => {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    isConnected,
   } = useTransactions();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -83,7 +84,7 @@ const Index = () => {
         monthTabs={monthTabs}
         onMonthChange={setCurrentMonth}
         onAddTransaction={handleAddTransaction}
-        isConnected={isApiConfigured}
+        isConnected={isConnected}
       />
 
       <main className="container px-4 py-8 md:px-6">
@@ -91,7 +92,6 @@ const Index = () => {
           <ApiStatusBanner />
           
           <SummaryCards
-            income={summary.income}
             expense={summary.expense}
             balance={summary.balance}
             transactionCount={summary.transactionCount}

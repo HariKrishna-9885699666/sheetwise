@@ -6,11 +6,34 @@ export function getMonthTabName(date: Date): string {
 }
 
 export function getMonthDisplayName(date: Date): string {
+  // Validate date before formatting
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date';
+  }
   return format(date, "MMMM yyyy");
 }
 
 export function parseMonthTabName(tabName: string): Date {
-  return parse(tabName, "MMMM yyyy", new Date());
+  try {
+    const date = parse(tabName, "MMMM yyyy", new Date());
+    // Check if parsed date is valid
+    if (isNaN(date.getTime())) {
+      return new Date(); // Return current date as fallback
+    }
+    return date;
+  } catch (error) {
+    return new Date(); // Return current date as fallback
+  }
+}
+
+// Check if a tab name is a valid month format
+export function isValidMonthTab(tabName: string): boolean {
+  try {
+    const date = parse(tabName, "MMMM yyyy", new Date());
+    return !isNaN(date.getTime()) && format(date, "MMMM yyyy") === tabName;
+  } catch {
+    return false;
+  }
 }
 
 export function getMonthFromTabName(tabName: string): { start: Date; end: Date } {
