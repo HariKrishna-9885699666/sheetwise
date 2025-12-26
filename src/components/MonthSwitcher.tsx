@@ -132,20 +132,20 @@ export function MonthSwitcher({
   };
 
   return (
-    <div className="flex items-center gap-1.5 md:gap-2">
-      <div className="flex items-center rounded-lg border border-border bg-card p-0.5 md:p-1">
+    <div className="flex items-center gap-1.5 md:gap-2 w-full md:w-auto">
+      <div className="flex items-center rounded-lg border border-border bg-card p-0.5 md:p-1 flex-1 md:flex-initial">
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 md:h-8 md:w-8"
+          className="h-7 w-7 md:h-8 md:w-8 shrink-0"
           onClick={handlePrevious}
         >
           <ChevronLeft className="h-3.5 w-3.5 md:h-4 md:w-4" />
         </Button>
 
-        <div className="flex items-center gap-0.5 md:gap-1 px-1 md:px-2">
+        <div className="flex items-center gap-0.5 md:gap-1 px-1 md:px-2 flex-1 md:flex-initial justify-center">
           <Select value={currentMonthNum.toString()} onValueChange={handleMonthChange}>
-            <SelectTrigger className="h-7 md:h-8 w-[90px] md:w-[120px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0">
+            <SelectTrigger className="h-7 md:h-8 w-auto md:w-[120px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0 min-w-[90px]">
               <SelectValue>{months[currentMonthNum].label}</SelectValue>
             </SelectTrigger>
             <SelectContent 
@@ -162,7 +162,7 @@ export function MonthSwitcher({
           </Select>
 
           <Select value={currentYear.toString()} onValueChange={handleYearChange}>
-            <SelectTrigger className="h-7 md:h-8 w-[60px] md:w-[80px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0">
+            <SelectTrigger className="h-7 md:h-8 w-auto md:w-[80px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0 min-w-[60px]">
               <SelectValue>{currentYear}</SelectValue>
             </SelectTrigger>
             <SelectContent 
@@ -182,7 +182,7 @@ export function MonthSwitcher({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 md:h-8 md:w-8"
+          className="h-7 w-7 md:h-8 md:w-8 shrink-0"
           onClick={handleNext}
         >
           <ChevronRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -194,7 +194,7 @@ export function MonthSwitcher({
           variant="outline"
           size="sm"
           onClick={handleToday}
-          className="h-7 md:h-8 gap-1 md:gap-1.5 text-xs px-2 md:px-3"
+          className="h-7 md:h-8 gap-1 md:gap-1.5 text-xs px-2 md:px-3 shrink-0"
         >
           <Calendar className="h-3 w-3 md:h-3.5 md:w-3.5" />
           <span className="hidden sm:inline">Today</span>
