@@ -46,8 +46,8 @@ export function Header({
           {/* Hamburger Menu - Mobile Only */}
           <SheetComponent open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden">
-                <Menu className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="h-16 w-16 md:hidden">
+                <Menu className="h-10 w-10" />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] sm:w-[350px]">
@@ -153,7 +153,7 @@ export function Header({
             <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-lg bg-primary">
               <Wallet className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
             </div>
-            <span className="hidden font-semibold md:inline-block">
+            <span className="font-semibold block md:inline-block text-base md:text-lg">
               ExpenseTracker
             </span>
           </div>
@@ -229,12 +229,12 @@ export function Header({
             )}
           </div>
 
-          {/* Mobile: Show only Add button */}
-          <Button onClick={onAddTransaction} className="h-8 md:h-9 gap-1.5 md:gap-2 px-3 md:px-4 text-xs md:text-sm">
+          {/* Mobile: Show only Add button (removed as per request) */}
+          {/* <Button onClick={onAddTransaction} className="h-8 md:h-9 gap-1.5 md:gap-2 px-3 md:px-4 text-xs md:text-sm">
             <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
             <span className="hidden sm:inline">Add</span>
             <span className="hidden md:inline">Transaction</span>
-          </Button>
+          </Button> */}
         </div>
 
         {/* Mobile Month Switcher - Full Width on Second Row */}
