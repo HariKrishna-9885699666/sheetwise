@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, ChevronRight, Github, Linkedin, FileText, Phone, Mail, MapPin, GraduationCap } from "lucide-react";
+import { User, ChevronRight, Github, Linkedin, FileText, Phone, Mail, MapPin, GraduationCap, Globe } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -117,6 +117,21 @@ export function ProfileModal() {
                       className="ml-2 text-primary hover:underline"
                     >
                       Hashnode
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Globe className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <strong className="font-semibold">Portfolio:</strong>
+                    <a 
+                      href="https://harikrishna.netlify.app" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 text-primary hover:underline"
+                    >
+                      harikrishna.netlify.app
                     </a>
                   </div>
                 </div>
