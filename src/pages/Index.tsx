@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { SummaryCards } from "@/components/SummaryCards";
 import { TransactionList } from "@/components/TransactionList";
 import { TransactionForm } from "@/components/TransactionForm";
+import { BulkExpenseForm } from "@/components/BulkExpenseForm";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { ProfileModal } from "@/components/ProfileModal";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,8 @@ import {
   TrendingUp as TrendingUpIcon,
   Gift as GiftIcon,
   MoreHorizontal,
+  FileText,
+  Files,
 } from "lucide-react";
 import {
   Collapsible,
@@ -38,6 +41,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const categoryIcons: Record<string, any> = {
   "Food & Dining": UtensilsCrossed,
@@ -71,6 +80,7 @@ const Index = () => {
     userEmail,
   } = useTransactions();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkFormOpen, setIsBulkFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -117,8 +127,43 @@ const Index = () => {
   }, [transactions, search, category, sort]);
 
   const handleAddTransaction = () => {
+    console.log('handleAddTransaction called, current state:', isFormOpen);
     setEditingTransaction(null);
-    setIsFormOpen(true);
+    setIsBulkFormOpen(false); // Ensure bulk form is closed
+    setTimeout(() => {
+      console.log('Setting isFormOpen to true');
+      setIsFormOpen(true);
+    }, 0);
+  };
+
+  const handleAddBulkExpense = () => {
+    console.log('handleAddBulkExpense called, current state:', isBulkFormOpen);
+    setEditingTransaction(null);
+    setIsFormOpen(false); // Ensure single form is closed
+    setTimeout(() => {
+      console.log('Setting isBulkFormOpen to true');
+      setIsBulkFormOpen(true);
+    }, 0);
+  };
+
+  const handleBulkExpenseSave = async (
+    expenses: Omit<Transaction, "id" | "createdAt" | "updatedAt">[]
+  ) => {
+    try {
+      for (const expense of expenses) {
+        await addTransaction(expense);
+      }
+      toast({
+        title: "Expenses added",
+        description: `Successfully added ${expenses.length} expense${expenses.length > 1 ? 's' : ''}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add some expenses. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditTransaction = (transaction: Transaction) => {
@@ -159,6 +204,7 @@ const Index = () => {
         description: "Your transaction has been recorded.",
       });
     }
+    setIsFormOpen(false);
   };
 
   const handleSignOut = () => {
@@ -194,6 +240,7 @@ const Index = () => {
         monthTabs={monthTabs}
         onMonthChange={setCurrentMonth}
         onAddTransaction={handleAddTransaction}
+        onAddBulkExpense={handleAddBulkExpense}
         isConnected={isConnected}
         userEmail={userEmail}
         onSignOut={handleSignOut}
@@ -412,10 +459,19 @@ const Index = () => {
       </main>
 
       <TransactionForm
+        key={isFormOpen ? 'form-open' : 'form-closed'}
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         transaction={editingTransaction}
         onSubmit={handleFormSubmit}
+      />
+
+      <BulkExpenseForm
+        key={isBulkFormOpen ? 'bulk-open' : 'bulk-closed'}
+        open={isBulkFormOpen}
+        onOpenChange={setIsBulkFormOpen}
+        onSave={handleBulkExpenseSave}
+        currentMonth={currentMonth}
       />
 
       <DeleteConfirmDialog
@@ -424,14 +480,28 @@ const Index = () => {
         onConfirm={handleConfirmDelete}
       />
 
-      {/* Floating Action Button for Mobile */}
-      <button
-        onClick={handleAddTransaction}
-        className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-      >
-        <Plus className="h-6 w-6" />
-        <span className="text-lg font-semibold">Add Transaction</span>
-      </button>
+      {/* Floating Action Button for Mobile with Dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+          >
+            <Plus className="h-6 w-6" />
+            <span className="text-lg font-semibold">Add Expense</span>
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" side="top" className="w-56 mb-2">
+          <DropdownMenuItem onClick={handleAddTransaction}>
+            <FileText className="h-4 w-4 mr-2" />
+            Single Expense
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleAddBulkExpense}>
+            <Files className="h-4 w-4 mr-2" />
+            Multiple Expenses
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Profile Modal */}
       <ProfileModal />

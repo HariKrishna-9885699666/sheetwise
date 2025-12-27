@@ -1,4 +1,4 @@
-import { Wallet, Plus, Cloud, User, Sheet, Menu } from "lucide-react";
+import { Wallet, Plus, Cloud, User, Sheet, Menu, ChevronDown, FileText, Files } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MonthSwitcher } from "./MonthSwitcher";
@@ -15,12 +15,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   currentMonth: string;
   monthTabs: string[];
   onMonthChange: (month: string) => void;
   onAddTransaction: () => void;
+  onAddBulkExpense: () => void;
   isConnected: boolean;
   userEmail?: string | null;
   onSignOut?: () => void;
@@ -32,6 +39,7 @@ export function Header({
   monthTabs,
   onMonthChange,
   onAddTransaction,
+  onAddBulkExpense,
   isConnected,
   userEmail,
   onSignOut,
@@ -104,8 +112,19 @@ export function Header({
                       }} 
                       className="w-full justify-start gap-2"
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Transaction
+                      <FileText className="h-4 w-4" />
+                      Single Expense
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        onAddBulkExpense();
+                        setMobileMenuOpen(false);
+                      }} 
+                      variant="outline"
+                      className="w-full justify-start gap-2"
+                    >
+                      <Files className="h-4 w-4" />
+                      Multiple Expenses
                     </Button>
                     
                     {isConnected && onSignOut && (
@@ -163,9 +182,8 @@ export function Header({
 
         <div className="flex items-center gap-1.5 md:gap-2">
           {/* Mobile: Connection Status Indicator */}
-          <div className="md:hidden">
-            <Cloud className={`h-5 w-5 ${isConnected ? 'text-green-500 fill-green-500' : 'text-gray-400 fill-gray-400'}`} 
-                   title={isConnected ? 'Connected' : 'Not Connected'} />
+          <div className="md:hidden" title={isConnected ? 'Connected' : 'Not Connected'}>
+            <Cloud className={`h-5 w-5 ${isConnected ? 'text-green-500 fill-green-500' : 'text-gray-400 fill-gray-400'}`} />
           </div>
 
           {/* Desktop: Show status badges and buttons */}
@@ -226,12 +244,26 @@ export function Header({
             )}
           </div>
 
-          {/* Mobile: Show only Add button (removed as per request) */}
-          {/* <Button onClick={onAddTransaction} className="h-8 md:h-9 gap-1.5 md:gap-2 px-3 md:px-4 text-xs md:text-sm">
-            <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Add</span>
-            <span className="hidden md:inline">Transaction</span>
-          </Button> */}
+          {/* Add Expense Button - Desktop dropdown menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="hidden md:flex h-9 gap-2 px-4 text-sm">
+                <Plus className="h-4 w-4" />
+                Add Expense
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onAddTransaction}>
+                <FileText className="h-4 w-4 mr-2" />
+                Single Expense
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onAddBulkExpense}>
+                <Files className="h-4 w-4 mr-2" />
+                Multiple Expenses
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Mobile Month Switcher - Full Width on Second Row */}

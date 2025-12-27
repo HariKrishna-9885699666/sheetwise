@@ -107,7 +107,25 @@ export function TransactionForm({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Reset form when dialog opens/closes or transaction changes
   useEffect(() => {
+    console.log('TransactionForm useEffect - open:', open, 'transaction:', transaction);
+    if (!open) {
+      // Reset everything when dialog closes
+      form.reset({
+        date: new Date(),
+        amount: undefined,
+        category: "",
+        account: "Savings",
+        notes: "",
+        image: undefined,
+      });
+      setImagePreview(null);
+      setSelectedFile(null);
+      return;
+    }
+
+    // When dialog opens, populate with transaction data or defaults
     if (transaction) {
       form.reset({
         date: new Date(transaction.date),
@@ -129,7 +147,7 @@ export function TransactionForm({
       });
       setImagePreview(null);
     }
-  }, [transaction, form]);
+  }, [open, transaction, form]);
 
   // Image resize and validation
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
