@@ -109,7 +109,6 @@ export function TransactionForm({
 
   // Reset form when dialog opens/closes or transaction changes
   useEffect(() => {
-    console.log('TransactionForm useEffect - open:', open, 'transaction:', transaction);
     if (!open) {
       // Reset everything when dialog closes
       form.reset({
@@ -246,11 +245,8 @@ export function TransactionForm({
       <DialogContent className="sm:max-w-[480px] bg-card">
         <DialogHeader>
           <DialogTitle className="text-xl">
-            {isEditing ? "Edit Transaction" : "Add Transaction"}
+            {isEditing ? "Edit Expense" : "Add Expense"}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing ? "Update your transaction details below." : "Add a new expense transaction."}
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -501,7 +497,7 @@ export function TransactionForm({
                 Cancel
               </Button>
               <Button type="submit" disabled={isUploading}>
-                {isUploading ? "Uploading..." : isEditing ? "Save Changes" : "Add Transaction"}
+                {isUploading ? "Uploading..." : isEditing ? "Save Changes" : "Add Expense"}
               </Button>
             </div>
           </form>

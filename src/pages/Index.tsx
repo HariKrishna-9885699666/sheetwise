@@ -34,6 +34,7 @@ import {
   MoreHorizontal,
   FileText,
   Files,
+  CheckCircle2,
 } from "lucide-react";
 import {
   Collapsible,
@@ -127,23 +128,15 @@ const Index = () => {
   }, [transactions, search, category, sort]);
 
   const handleAddTransaction = () => {
-    console.log('handleAddTransaction called, current state:', isFormOpen);
     setEditingTransaction(null);
-    setIsBulkFormOpen(false); // Ensure bulk form is closed
-    setTimeout(() => {
-      console.log('Setting isFormOpen to true');
-      setIsFormOpen(true);
-    }, 0);
+    setIsBulkFormOpen(false);
+    setTimeout(() => setIsFormOpen(true), 0);
   };
 
   const handleAddBulkExpense = () => {
-    console.log('handleAddBulkExpense called, current state:', isBulkFormOpen);
     setEditingTransaction(null);
-    setIsFormOpen(false); // Ensure single form is closed
-    setTimeout(() => {
-      console.log('Setting isBulkFormOpen to true');
-      setIsBulkFormOpen(true);
-    }, 0);
+    setIsFormOpen(false);
+    setTimeout(() => setIsBulkFormOpen(true), 0);
   };
 
   const handleBulkExpenseSave = async (
@@ -154,7 +147,12 @@ const Index = () => {
         await addTransaction(expense);
       }
       toast({
-        title: "Expenses added",
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Expenses added
+          </div>
+        ),
         description: `Successfully added ${expenses.length} expense${expenses.length > 1 ? 's' : ''}.`,
       });
     } catch (error) {
@@ -194,13 +192,23 @@ const Index = () => {
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, data);
       toast({
-        title: "Transaction updated",
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Transaction updated
+          </div>
+        ),
         description: "Your changes have been saved.",
       });
     } else {
       addTransaction(data);
       toast({
-        title: "Transaction added",
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            Transaction added
+          </div>
+        ),
         description: "Your transaction has been recorded.",
       });
     }

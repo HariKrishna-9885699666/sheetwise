@@ -26,7 +26,7 @@ export function SearchSelect({ options, value, onChange, placeholder, iconMap }:
     <div>
       <button
         type="button"
-        className="w-full h-10 px-3 py-2 border rounded-md text-left bg-background"
+        className="w-full h-10 px-3 py-2 border rounded-md text-left bg-background text-sm flex items-center"
         onClick={() => setOpen(true)}
       >
         {value || placeholder || "Select..."}

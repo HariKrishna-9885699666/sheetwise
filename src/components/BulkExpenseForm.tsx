@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -79,10 +81,10 @@ export function BulkExpenseForm({
     },
   ]);
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   // Reset form when dialog closes
   useEffect(() => {
-    console.log('BulkExpenseForm useEffect - open:', open);
     if (!open) {
       setRows([
         {
@@ -129,7 +131,21 @@ export function BulkExpenseForm({
     );
 
     if (validRows.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in Date, Amount, and Category for at least one expense.",
+        variant: "destructive",
+      });
       return;
+    }
+
+    // Check if there are invalid rows
+    if (validRows.length < rows.length) {
+      toast({
+        title: "Some entries skipped",
+        description: `${rows.length - validRows.length} incomplete row(s) will be skipped.`,
+        variant: "default",
+      });
     }
 
     setIsSaving(true);
@@ -167,7 +183,7 @@ export function BulkExpenseForm({
             {rows.map((row, index) => (
               <div
                 key={index}
-                className="grid grid-cols-12 gap-3 p-4 border rounded-lg relative"
+                className="grid grid-cols-2 md:grid-cols-12 gap-2 md:gap-3 p-3 md:p-4 border rounded-lg relative"
               >
                 {/* Remove button */}
                 {rows.length > 1 && (
@@ -182,46 +198,50 @@ export function BulkExpenseForm({
                 )}
 
                 {/* Date */}
-                <div className="col-span-12 sm:col-span-3">
-                  <Label htmlFor={`date-${index}`}>Date</Label>
+                <div className="col-span-1 md:col-span-3">
+                  <Label htmlFor={`date-${index}`} className="text-xs md:text-sm">Date</Label>
                   <Input
                     id={`date-${index}`}
                     type="date"
                     value={row.date}
                     onChange={(e) => updateRow(index, "date", e.target.value)}
+                    className="text-xs md:text-sm h-8 md:h-10"
                     required
                   />
                 </div>
 
                 {/* Amount */}
-                <div className="col-span-12 sm:col-span-2">
-                  <Label htmlFor={`expense-${index}`}>Amount ₹</Label>
+                <div className="col-span-1 md:col-span-2">
+                  <Label htmlFor={`expense-${index}`} className="text-xs md:text-sm">Amount</Label>
                   <Input
                     id={`expense-${index}`}
                     type="number"
                     step="0.01"
-                    placeholder="0.00"
+                    placeholder="0"
                     value={row.expense}
                     onChange={(e) => updateRow(index, "expense", e.target.value)}
+                    className="text-xs md:text-sm h-8 md:h-10"
                     required
                   />
                 </div>
 
                 {/* Category */}
-                <div className="col-span-12 sm:col-span-3">
-                  <Label htmlFor={`category-${index}`}>Category</Label>
-                  <SearchSelect
-                    options={categories}
-                    value={row.category}
-                    onChange={(value) => updateRow(index, "category", value)}
-                    placeholder="Select category"
-                    iconMap={categoryIcons}
-                  />
+                <div className="col-span-1 md:col-span-3">
+                  <Label htmlFor={`category-${index}`} className="text-xs md:text-sm">Category</Label>
+                  <div className="[&_button]:h-8 md:[&_button]:h-10 [&_button]:text-xs md:[&_button]:text-sm">
+                    <SearchSelect
+                      options={categories}
+                      value={row.category}
+                      onChange={(value) => updateRow(index, "category", value)}
+                      placeholder="Category"
+                      iconMap={categoryIcons}
+                    />
+                  </div>
                 </div>
 
-                {/* Account */}
-                <div className="col-span-12 sm:col-span-2">
-                  <Label htmlFor={`account-${index}`}>Account</Label>
+                {/* Account - Hidden on mobile, visible on desktop */}
+                <div className="hidden md:block md:col-span-2">
+                  <Label htmlFor={`account-${index}`} className="text-xs md:text-sm">Account</Label>
                   <SearchSelect
                     options={accounts}
                     value={row.account}
@@ -231,13 +251,14 @@ export function BulkExpenseForm({
                 </div>
 
                 {/* Notes */}
-                <div className="col-span-12 sm:col-span-2">
-                  <Label htmlFor={`notes-${index}`}>Notes</Label>
+                <div className="col-span-1 md:col-span-2">
+                  <Label htmlFor={`notes-${index}`} className="text-xs md:text-sm">Notes</Label>
                   <Input
                     id={`notes-${index}`}
                     placeholder="Optional"
                     value={row.notes}
                     onChange={(e) => updateRow(index, "notes", e.target.value)}
+                    className="text-xs md:text-sm h-8 md:h-10"
                   />
                 </div>
               </div>
