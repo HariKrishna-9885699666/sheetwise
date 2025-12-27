@@ -4,6 +4,7 @@ import { getMonthTabName, getCurrentMonthTab } from "@/lib/date-utils";
 import * as sheetsApi from "@/lib/google-sheets";
 import { deleteImageFromDrive } from "@/lib/google-drive";
 import { toast } from "sonner";
+import { saveCacheData, getCacheData, deleteCacheEntry, CACHE_KEYS } from "@/lib/indexeddb";
 
 // Generate a simple unique ID
 function generateId(): string {
@@ -228,6 +229,9 @@ export function useTransactions() {
             [monthTab]: [...(prev[monthTab] || []), newTransaction],
           }));
           
+          // Invalidate cache
+          await deleteCacheEntry(CACHE_KEYS.ALL_MONTHS);
+          
           return newTransaction;
         } catch (error) {
           toast.error("Failed to save to Google Sheets");
@@ -336,6 +340,11 @@ export function useTransactions() {
           ),
         }));
       }
+      
+      // Invalidate cache after update
+      if (!useLocalData) {
+        await deleteCacheEntry(CACHE_KEYS.ALL_MONTHS);
+      }
     },
     [transactions, useLocalData]
   );
@@ -384,8 +393,55 @@ export function useTransactions() {
         });
         return updated;
       });
+      
+      // Invalidate cache
+      await deleteCacheEntry(CACHE_KEYS.ALL_MONTHS);
     },
     [transactions, useLocalData]
+  );
+
+  const loadAllMonths = useCallback(
+    async (forceRefresh = false) => {
+      if (!gapiReady || !sheetsApi.isSignedIn()) {
+        return;
+      }
+
+      try {
+        // Check if we have cached data and not forcing refresh
+        if (!forceRefresh) {
+          const cachedData = await getCacheData(CACHE_KEYS.ALL_MONTHS);
+          if (cachedData) {
+            console.log('Using cached data from IndexedDB');
+            setTransactions(prev => ({ ...prev, ...cachedData }));
+            return;
+          }
+        }
+
+        console.log('Fetching fresh data from Google Sheets');
+        const tabs = await sheetsApi.getSheetTabs();
+        const allData: Record<string, Transaction[]> = {};
+
+        // Load data for all tabs
+        await Promise.all(
+          tabs.map(async (tab) => {
+            try {
+              const sheetData = await sheetsApi.readMonthData(tab);
+              allData[tab] = sheetData.map(sheetRowToTransaction);
+            } catch (error) {
+              console.error(`Failed to load data for ${tab}:`, error);
+              allData[tab] = [];
+            }
+          })
+        );
+
+        // Save to IndexedDB cache
+        await saveCacheData(CACHE_KEYS.ALL_MONTHS, allData);
+        setTransactions(prev => ({ ...prev, ...allData }));
+      } catch (error) {
+        console.error("Failed to load all months:", error);
+      }
+    },
+    [gapiReady]
   );
 
   return {
@@ -399,6 +455,7 @@ export function useTransactions() {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    loadAllMonths,
     isConnected: sheetsApi.isApiConfigured && sheetsApi.isSignedIn() && !useLocalData,
     userEmail,
   };

@@ -116,9 +116,23 @@ A modern React + TypeScript web application for managing daily expenses and inco
 - 📱 **Responsive design** - optimized for mobile and desktop
 - 🖼️ **Image attachments** - upload receipts to Google Drive (max 1MB, auto-resized to 600x600px)
 - 🗑️ **Smart cleanup** - automatic image deletion when replacing or removing
+- ⏱️ **DateTime storage** - transactions stored with precise timestamps for accurate sorting
+
+### Bulk Operations & Quick Actions
+- 📝 **Bulk expense entry** - add multiple expenses at once with streamlined form
+- ⚡ **Quick category selection** - icon buttons for Transport, Food, Bills on mobile
+- ✅ **Form validation** - instant feedback for missing required fields
+- 🎯 **Single or Multiple** - dropdown menu to choose between single and bulk entry
+
+### Search & Discovery
+- 🔍 **Global search** - search across all months and sheets simultaneously
+- 💾 **IndexedDB caching** - instant search results with smart caching
+- 🚀 **Performance optimization** - cached data eliminates repeated API calls
+- 🔄 **Auto-invalidation** - cache updates when transactions change
 
 ### Google Integration
 - 🔐 **OAuth 2.0 Authentication** - secure access to your private data
+- 🔒 **30-day session persistence** - stay signed in with automatic token refresh
 - 📂 **Google Drive Storage** - organized folder structure (Monthly Expenses > Images)
 - 🎯 **Auto-create month tabs** - tabs created automatically (e.g., `December 2025`)
 - ✏️ **Smart editing** - move transactions between months when date changes
@@ -131,8 +145,10 @@ A modern React + TypeScript web application for managing daily expenses and inco
 - 📊 Summary cards with total expenses and transaction count
 - 🔍 Search, filter, and sort transactions
 - ✨ Smooth animations and loading states
-- 📱 Mobile floating action button for easy access
+- 📱 **Mobile-optimized** - 2x2 grid layout for bulk forms, right-aligned action buttons
 - 🖼️ Icon-based image preview (opens in new tab)
+- 🎯 **Success notifications** - visual feedback with icons for all actions
+- 🔄 **Modal state management** - smooth reopening without conflicts
 - ⏱️ Edit restrictions (last 10 days only)
 
 ---
@@ -216,6 +232,7 @@ Each month tab contains these columns:
 - **Date Handling:** date-fns
 - **API:** Google Sheets API v4 + Google Drive API v3 (REST)
 - **Auth:** gapi-script (Google OAuth 2.0)
+- **Storage:** IndexedDB (browser-native caching)
 - **Notifications:** Sonner (toast notifications)
 - **Icons:** Lucide React
 
@@ -228,17 +245,21 @@ sheetwise/
 ├── src/
 │   ├── components/           # React components
 │   │   ├── ui/              # shadcn/ui components (40+ components)
-│   │   ├── Header.tsx       # App header with sign-in/out
+│   │   ├── Header.tsx       # App header with sign-in/out & search
 │   │   ├── MonthSwitcher.tsx
 │   │   ├── SummaryCards.tsx
-│   │   ├── TransactionForm.tsx  # Form with image upload
-│   │   ├── TransactionList.tsx  # Table with filters
-│   │   └── DeleteConfirmDialog.tsx
+│   │   ├── TransactionForm.tsx  # Single transaction form with image upload
+│   │   ├── BulkExpenseForm.tsx  # Bulk expense entry form (NEW)
+│   │   ├── TransactionList.tsx  # Table with filters & mobile-optimized actions
+│   │   ├── GlobalSearch.tsx     # Global search dialog (NEW)
+│   │   ├── DeleteConfirmDialog.tsx
+│   │   └── ProfileModal.tsx     # User profile with portfolio link
 │   ├── hooks/               # Custom React hooks
-│   │   └── useTransactions.ts   # Main state management
+│   │   └── useTransactions.ts   # Main state management with caching
 │   ├── lib/                 # Utility functions
 │   │   ├── google-sheets.ts     # Sheets API integration
 │   │   ├── google-drive.ts      # Drive API integration
+│   │   ├── indexeddb.ts         # IndexedDB caching utilities (NEW)
 │   │   ├── date-utils.ts        # Date formatting
 │   │   ├── format-currency.ts
 │   │   └── utils.ts
@@ -266,16 +287,57 @@ sheetwise/
 
 ### Adding a Transaction
 
-1. Click **"Add Transaction"** button (header or floating button on mobile)
-2. Fill in the form:
+1. Click **"Add Expense"** button (header or floating button on mobile)
+2. Choose **"Single Expense"** or **"Multiple Expenses"** from dropdown
+3. Fill in the form:
    - **Date:** Select date (determines which month tab)
    - **Category:** Choose from predefined categories
    - **Account:** Select payment method
    - **Notes:** Add description
    - **Amount:** Enter expense amount
    - **Image (Optional):** Upload receipt (max 1MB, auto-resized)
-3. Click **"Add Transaction"**
-4. Verify in Google Spreadsheet!
+4. Click **"Add Expense"** or **"Add Expenses"** for bulk
+5. Verify in Google Spreadsheet!
+
+### Bulk Expense Entry (NEW)
+
+Add multiple expenses quickly:
+1. Click **"Add Expense"** → **"Multiple Expenses"**
+2. For each expense:
+   - Select date, amount, category, notes
+   - Use quick category icons (Transport 🚗, Food 🍴, Bills ⚡) on mobile
+   - Fields arranged in 2x2 grid on mobile for easy thumb access
+3. Click **"Add Row"** to add more expenses
+4. Click **"Add Expenses"** to save all at once
+5. Get success notification with count
+
+**Mobile Optimizations:**
+- Quick category selection with icon buttons
+- Compact 2x2 field layout
+- Touch-friendly buttons
+- Instant validation feedback
+
+### Global Search (NEW)
+
+Search across all months instantly:
+1. Click **Search icon** (🔍) in header
+2. Type your search query
+3. Searches across:
+   - Category names
+   - Notes/descriptions
+   - Account names
+   - Expense amounts
+   - Dates
+4. Click any result to:
+   - Jump to that month
+   - Open edit form for transaction
+5. Results cached for instant subsequent searches
+
+**Performance Features:**
+- First search: Loads all months (cached in browser)
+- Next searches: Instant results from cache
+- Cache auto-clears when you add/edit/delete transactions
+- No repeated API calls for same searches
 
 ### Editing a Transaction
 
@@ -326,8 +388,16 @@ sheetwise/
 
 - ✅ **Private spreadsheet** - only accessible by signed-in user
 - ✅ **Secure tokens** - no API keys exposed
+- ✅ **30-day session** - stay signed in with automatic token refresh
 - ✅ **User consent** - explicit permission grants
 - ✅ **Revocable access** - can revoke anytime in Google Account settings
+
+### Session Management (NEW)
+
+- **Persistent sessions:** Stay signed in for 30 days
+- **Automatic refresh:** Silent token renewal when expired
+- **Secure storage:** OAuth tokens stored in localStorage
+- **Manual sign-out:** Clear session anytime from profile menu
 
 ### API Limits
 
@@ -335,6 +405,7 @@ sheetwise/
 - 60 requests/minute per user
 - 300 requests/minute per project
 - Sufficient for personal use
+- **Caching reduces calls:** IndexedDB cache minimizes API usage
 
 **Google Drive API:**
 - 1000 requests per 100 seconds per user
@@ -347,6 +418,7 @@ sheetwise/
 3. **Use test data** - test with sample data first
 4. **Regular backups** - Google Sheets has version history
 5. **Revoke if needed** - visit Google Account permissions
+6. **Clear cache if needed** - browser's IndexedDB can be cleared via DevTools
 
 ---
 

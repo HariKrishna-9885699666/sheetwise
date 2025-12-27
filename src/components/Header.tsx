@@ -1,4 +1,4 @@
-import { Wallet, Plus, Cloud, User, Sheet, Menu, ChevronDown, FileText, Files } from "lucide-react";
+import { Wallet, Plus, Cloud, User, Sheet, ChevronDown, FileText, Files, Search } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MonthSwitcher } from "./MonthSwitcher";
@@ -28,6 +28,7 @@ interface HeaderProps {
   onMonthChange: (month: string) => void;
   onAddTransaction: () => void;
   onAddBulkExpense: () => void;
+  onGlobalSearch: () => void;
   isConnected: boolean;
   userEmail?: string | null;
   onSignOut?: () => void;
@@ -40,6 +41,7 @@ export function Header({
   onMonthChange,
   onAddTransaction,
   onAddBulkExpense,
+  onGlobalSearch,
   isConnected,
   userEmail,
   onSignOut,
@@ -181,9 +183,19 @@ export function Header({
         </div>
 
         <div className="flex items-center gap-1.5 md:gap-2">
-          {/* Mobile: Connection Status Indicator */}
-          <div className="md:hidden" title={isConnected ? 'Connected' : 'Not Connected'}>
-            <Cloud className={`h-5 w-5 ${isConnected ? 'text-green-500 fill-green-500' : 'text-gray-400 fill-gray-400'}`} />
+          {/* Mobile: Connection Status Indicator & Search */}
+          <div className="flex items-center gap-2 md:hidden">
+            <div title={isConnected ? 'Connected' : 'Not Connected'}>
+              <Cloud className={`h-5 w-5 ${isConnected ? 'text-green-500 fill-green-500' : 'text-gray-400 fill-gray-400'}`} />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={onGlobalSearch}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Desktop: Show status badges and buttons */}
@@ -243,6 +255,16 @@ export function Header({
               </>
             )}
           </div>
+
+          {/* Global Search Button - Desktop */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="hidden md:flex h-9 w-9"
+            onClick={onGlobalSearch}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
 
           {/* Add Expense Button - Desktop dropdown menu */}
           <DropdownMenu>

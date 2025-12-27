@@ -31,7 +31,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { uploadImageToDrive, deleteImageFromDrive } from "@/lib/google-drive";
 import { useToast } from "@/hooks/use-toast";

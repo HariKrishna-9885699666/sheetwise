@@ -8,6 +8,7 @@ import { TransactionForm } from "@/components/TransactionForm";
 import { BulkExpenseForm } from "@/components/BulkExpenseForm";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { ProfileModal } from "@/components/ProfileModal";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -34,8 +35,6 @@ import {
   MoreHorizontal,
   FileText,
   Files,
-  CheckCircle2,
-  Trash2,
 } from "lucide-react";
 import {
   Collapsible,
@@ -70,6 +69,7 @@ const Index = () => {
   const { toast } = useToast();
   const {
     transactions,
+    allTransactions,
     currentMonth,
     setCurrentMonth,
     monthTabs,
@@ -77,12 +77,14 @@ const Index = () => {
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    loadAllMonths,
     isConnected,
     isLoading,
     userEmail,
   } = useTransactions();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBulkFormOpen, setIsBulkFormOpen] = useState(false);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -140,6 +142,24 @@ const Index = () => {
     setTimeout(() => setIsBulkFormOpen(true), 0);
   };
 
+  const handleGlobalSearch = async () => {
+    // Load all months' data before opening search
+    if (loadAllMonths) {
+      await loadAllMonths();
+    }
+    setIsGlobalSearchOpen(true);
+  };
+
+  const handleSelectSearchResult = (transaction: Transaction, month: string) => {
+    // Switch to the month of the found transaction
+    if (month !== currentMonth) {
+      setCurrentMonth(month);
+    }
+    // Open edit form for the transaction
+    setEditingTransaction(transaction);
+    setIsFormOpen(true);
+  };
+
   const handleBulkExpenseSave = async (
     expenses: Omit<Transaction, "id" | "createdAt" | "updatedAt">[]
   ) => {
@@ -148,12 +168,7 @@ const Index = () => {
         await addTransaction(expense);
       }
       toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            Expenses added
-          </div>
-        ),
+        title: "✅ Expenses added",
         description: `Successfully added ${expenses.length} expense${expenses.length > 1 ? 's' : ''}.`,
       });
     } catch (error) {
@@ -179,12 +194,7 @@ const Index = () => {
     if (transactionToDelete) {
       deleteTransaction(transactionToDelete);
       toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <Trash2 className="h-5 w-5 text-red-600" />
-            Transaction deleted
-          </div>
-        ),
+        title: "🗑️ Transaction deleted",
         description: "The transaction has been removed.",
       });
     }
@@ -198,23 +208,13 @@ const Index = () => {
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, data);
       toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            Transaction updated
-          </div>
-        ),
+        title: "✅ Transaction updated",
         description: "Your changes have been saved.",
       });
     } else {
       addTransaction(data);
       toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            Transaction added
-          </div>
-        ),
+        title: "✅ Transaction added",
         description: "Your transaction has been recorded.",
       });
     }
@@ -255,6 +255,7 @@ const Index = () => {
         onMonthChange={setCurrentMonth}
         onAddTransaction={handleAddTransaction}
         onAddBulkExpense={handleAddBulkExpense}
+        onGlobalSearch={handleGlobalSearch}
         isConnected={isConnected}
         userEmail={userEmail}
         onSignOut={handleSignOut}
@@ -516,6 +517,14 @@ const Index = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Global Search Dialog */}
+      <GlobalSearch
+        open={isGlobalSearchOpen}
+        onOpenChange={setIsGlobalSearchOpen}
+        allTransactions={allTransactions}
+        onSelectTransaction={handleSelectSearchResult}
+      />
 
       {/* Profile Modal */}
       <ProfileModal />
