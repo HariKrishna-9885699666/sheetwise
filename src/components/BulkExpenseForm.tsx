@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -176,6 +177,9 @@ export function BulkExpenseForm({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Add Multiple Expenses</DialogTitle>
+          <DialogDescription>
+            Fill in details for each expense row and click Save All to add them.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-1">
@@ -228,7 +232,49 @@ export function BulkExpenseForm({
                 {/* Category */}
                 <div className="col-span-1 md:col-span-3">
                   <Label htmlFor={`category-${index}`} className="text-xs md:text-sm">Category</Label>
-                  <div className="[&_button]:h-8 md:[&_button]:h-10 [&_button]:text-xs md:[&_button]:text-sm">
+                  
+                  {/* Mobile: Quick icon buttons */}
+                  <div className="flex gap-1 md:hidden">
+                    <button
+                      type="button"
+                      onClick={() => updateRow(index, "category", "Transportation")}
+                      className={cn(
+                        "flex-1 h-8 flex items-center justify-center rounded-md border transition-colors",
+                        row.category === "Transportation" 
+                          ? "bg-primary text-primary-foreground border-primary" 
+                          : "bg-background hover:bg-accent"
+                      )}
+                    >
+                      <Car className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateRow(index, "category", "Food & Dining")}
+                      className={cn(
+                        "flex-1 h-8 flex items-center justify-center rounded-md border transition-colors",
+                        row.category === "Food & Dining" 
+                          ? "bg-primary text-primary-foreground border-primary" 
+                          : "bg-background hover:bg-accent"
+                      )}
+                    >
+                      <UtensilsCrossed className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateRow(index, "category", "Bills & EMI")}
+                      className={cn(
+                        "flex-1 h-8 flex items-center justify-center rounded-md border transition-colors",
+                        row.category === "Bills & EMI" 
+                          ? "bg-primary text-primary-foreground border-primary" 
+                          : "bg-background hover:bg-accent"
+                      )}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Desktop: Full dropdown */}
+                  <div className="hidden md:block [&_button]:h-10 [&_button]:text-sm">
                     <SearchSelect
                       options={categories}
                       value={row.category}
@@ -277,11 +323,11 @@ export function BulkExpenseForm({
           </div>
         </div>
 
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="mt-4 flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving} className="flex-1">
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Saving..." : `Save All (${rows.filter(r => r.date && r.expense && r.category).length})`}
           </Button>

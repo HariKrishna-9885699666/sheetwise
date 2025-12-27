@@ -213,7 +213,7 @@ export function TransactionForm({
       }
 
       const data = {
-        date: format(values.date, "yyyy-MM-dd"),
+        date: `${format(values.date, "yyyy-MM-dd")}T${new Date().toTimeString().split(' ')[0]}`,
         expense: values.amount,
         category: values.category,
         account: values.account,

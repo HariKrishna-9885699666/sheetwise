@@ -510,7 +510,7 @@ export async function addTransaction(monthName: string, rowData: Omit<SheetRow, 
     await createMonthTab(monthName);
   }
   
-  const now = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const now = new Date().toISOString(); // Full ISO string with time
   const id = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   const fullRow: SheetRow = {

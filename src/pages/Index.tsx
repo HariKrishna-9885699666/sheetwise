@@ -35,6 +35,7 @@ import {
   FileText,
   Files,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import {
   Collapsible,
@@ -178,7 +179,12 @@ const Index = () => {
     if (transactionToDelete) {
       deleteTransaction(transactionToDelete);
       toast({
-        title: "Transaction deleted",
+        title: (
+          <div className="flex items-center gap-2">
+            <Trash2 className="h-5 w-5 text-red-600" />
+            Transaction deleted
+          </div>
+        ),
         description: "The transaction has been removed.",
       });
     }
