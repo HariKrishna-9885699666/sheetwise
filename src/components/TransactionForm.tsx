@@ -286,7 +286,7 @@ export function TransactionForm({
                           initialFocus
                           disabled={(date) => {
                             const tenDaysAgo = new Date();
-                            tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+                            tenDaysAgo.setDate(tenDaysAgo.getDate() - 90);
                             tenDaysAgo.setHours(0, 0, 0, 0);
                             return date < tenDaysAgo;
                           }}
