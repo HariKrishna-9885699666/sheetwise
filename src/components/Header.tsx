@@ -1,5 +1,6 @@
-import { Wallet, Plus, Cloud, User, Sheet, ChevronDown, FileText, Files, Search } from "lucide-react";
+import { Wallet, Plus, Cloud, User, Sheet, ChevronDown, FileText, Files, Search, Sun, Moon, Monitor } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { MonthSwitcher } from "./MonthSwitcher";
 import {
@@ -48,6 +49,36 @@ export function Header({
   onSignIn,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  function ThemeToggle({ className }: { className?: string }) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className={`h-9 w-9 ${className ?? ""}`} aria-label="Toggle theme">
+            {theme === "dark" ? (
+              <Moon className="h-4 w-4" />
+            ) : theme === "light" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Monitor className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setTheme("light")}>
+            <Sun className="h-4 w-4 mr-2" /> Light
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("dark")}>
+            <Moon className="h-4 w-4 mr-2" /> Dark
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("system")}>
+            <Monitor className="h-4 w-4 mr-2" /> System
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-sm">
@@ -80,12 +111,12 @@ export function Header({
                 <div className="space-y-2">
                   <h3 className="text-sm font-semibold text-muted-foreground">Status</h3>
                   {isConnected && userEmail ? (
-                    <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                      <div className="flex items-center gap-2 text-green-700">
+                    <div className="rounded-lg border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-950/40 p-3">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                         <Sheet className="h-4 w-4" />
                         <span className="font-medium">Connected to Google Sheets</span>
                       </div>
-                      <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                      <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-500">
                         <User className="h-3.5 w-3.5" />
                         <span className="truncate">{userEmail}</span>
                       </div>
@@ -196,6 +227,7 @@ export function Header({
             >
               <Search className="h-4 w-4" />
             </Button>
+            <ThemeToggle />
           </div>
 
           {/* Desktop: Show status badges and buttons */}
@@ -265,6 +297,9 @@ export function Header({
           >
             <Search className="h-4 w-4" />
           </Button>
+
+          {/* Theme Toggle - Desktop */}
+          <ThemeToggle className="hidden md:flex" />
 
           {/* Add Expense Button - Desktop dropdown menu */}
           <DropdownMenu>

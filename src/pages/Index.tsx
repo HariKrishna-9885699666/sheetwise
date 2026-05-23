@@ -415,7 +415,7 @@ const Index = () => {
             {isLoading ? (
               <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
                 {/* Skeleton Total Expenses Header */}
-                <div className="border-b-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+                <div className="border-b-2 border-border bg-muted/60 p-4">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-7 w-40" />
                     <Skeleton className="h-8 w-32" />
@@ -455,7 +455,7 @@ const Index = () => {
                 </Table>
                 
                 {/* Skeleton Total Expenses Footer */}
-                <div className="border-t-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+                <div className="border-t-2 border-border bg-muted/60 p-4">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-7 w-40" />
                     <Skeleton className="h-8 w-32" />

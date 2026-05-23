@@ -41,19 +41,19 @@ interface TransactionListProps {
 }
 
 const categoryColors: Record<string, { bg: string; text: string; icon: any }> = {
-  "Food & Dining": { bg: "bg-orange-100", text: "text-orange-700", icon: UtensilsCrossed },
-  Transportation: { bg: "bg-blue-100", text: "text-blue-700", icon: Car },
-  Shopping: { bg: "bg-pink-100", text: "text-pink-700", icon: ShoppingBag },
-  Entertainment: { bg: "bg-purple-100", text: "text-purple-700", icon: Popcorn },
-  "Bills & Utilities": { bg: "bg-slate-100", text: "text-slate-700", icon: Zap },
-  Healthcare: { bg: "bg-red-100", text: "text-red-700", icon: Heart },
-  Education: { bg: "bg-indigo-100", text: "text-indigo-700", icon: GraduationCap },
-  Travel: { bg: "bg-cyan-100", text: "text-cyan-700", icon: Plane },
-  Salary: { bg: "bg-emerald-100", text: "text-emerald-700", icon: Wallet },
-  Freelance: { bg: "bg-teal-100", text: "text-teal-700", icon: Briefcase },
-  Investment: { bg: "bg-amber-100", text: "text-amber-700", icon: TrendingUpIcon },
-  Gift: { bg: "bg-rose-100", text: "text-rose-700", icon: GiftIcon },
-  Other: { bg: "bg-gray-100", text: "text-gray-700", icon: MoreHorizontal },
+  "Food & Dining": { bg: "bg-orange-100 dark:bg-orange-900/40", text: "text-orange-700 dark:text-orange-300", icon: UtensilsCrossed },
+  Transportation: { bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-300", icon: Car },
+  Shopping: { bg: "bg-pink-100 dark:bg-pink-900/40", text: "text-pink-700 dark:text-pink-300", icon: ShoppingBag },
+  Entertainment: { bg: "bg-purple-100 dark:bg-purple-900/40", text: "text-purple-700 dark:text-purple-300", icon: Popcorn },
+  "Bills & Utilities": { bg: "bg-slate-100 dark:bg-slate-800/60", text: "text-slate-700 dark:text-slate-300", icon: Zap },
+  Healthcare: { bg: "bg-red-100 dark:bg-red-900/40", text: "text-red-700 dark:text-red-300", icon: Heart },
+  Education: { bg: "bg-indigo-100 dark:bg-indigo-900/40", text: "text-indigo-700 dark:text-indigo-300", icon: GraduationCap },
+  Travel: { bg: "bg-cyan-100 dark:bg-cyan-900/40", text: "text-cyan-700 dark:text-cyan-300", icon: Plane },
+  Salary: { bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300", icon: Wallet },
+  Freelance: { bg: "bg-teal-100 dark:bg-teal-900/40", text: "text-teal-700 dark:text-teal-300", icon: Briefcase },
+  Investment: { bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-300", icon: TrendingUpIcon },
+  Gift: { bg: "bg-rose-100 dark:bg-rose-900/40", text: "text-rose-700 dark:text-rose-300", icon: GiftIcon },
+  Other: { bg: "bg-gray-100 dark:bg-gray-800/60", text: "text-gray-700 dark:text-gray-300", icon: MoreHorizontal },
 };
 
 // Group transactions by date
@@ -98,10 +98,10 @@ export function TransactionList({
     <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
       {/* Total Expenses at Top */}
       {transactions.length > 0 && (
-        <div className="border-b-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+        <div className="border-b-2 border-border bg-muted/60 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-gray-700">TOTAL EXPENSES</span>
-            <span className="text-2xl font-bold text-orange-600">
+            <span className="text-xl font-bold text-foreground">TOTAL EXPENSES</span>
+            <span className="text-2xl font-bold text-orange-500 dark:text-orange-400">
               {formatCurrency(totalExpenses)}
             </span>
           </div>
@@ -125,7 +125,7 @@ export function TransactionList({
                   <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span className="font-semibold text-foreground text-sm sm:text-base">{displayDate}</span>
                 </div>
-                <span className="font-mono font-semibold text-orange-600 text-sm sm:text-base whitespace-nowrap">
+                <span className="font-mono font-semibold text-orange-600 dark:text-orange-400 text-sm sm:text-base whitespace-nowrap">
                   -{formatCurrency(dayTotal)}
                 </span>
               </div>
@@ -134,8 +134,8 @@ export function TransactionList({
               <div className="divide-y divide-border">
                 {dayTransactions.map((transaction, index) => {
                   const colors = categoryColors[transaction.category] || {
-                    bg: "bg-gray-100",
-                    text: "text-gray-700",
+                    bg: "bg-gray-100 dark:bg-gray-800/60",
+                    text: "text-gray-700 dark:text-gray-300",
                     icon: MoreHorizontal,
                   };
                   const CategoryIcon = colors.icon;
@@ -283,10 +283,10 @@ export function TransactionList({
         })}
       </div>
       {transactions.length > 0 && (
-        <div className="border-t-2 border-border bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+        <div className="border-t-2 border-border bg-muted/60 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-gray-700">TOTAL EXPENSES</span>
-            <span className="text-2xl font-bold text-orange-600">
+            <span className="text-xl font-bold text-foreground">TOTAL EXPENSES</span>
+            <span className="text-2xl font-bold text-orange-500 dark:text-orange-400">
               {formatCurrency(totalExpenses)}
             </span>
           </div>
