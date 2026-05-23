@@ -120,10 +120,13 @@ export function signIn(): Promise<void> {
           access_token: response.access_token,
         });
         
-        // Get user email and store with token
-        // Set expiry to 30 days from now instead of token expiry
-        const expiryTime = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days in milliseconds
-        
+        // Store token with the actual expiry time (expires_in is in seconds)
+        const expiryTime = Date.now() + ((response.expires_in || 3600) * 1000);
+
+        // Preserve existing email if already stored
+        const existing = localStorage.getItem(TOKEN_STORAGE_KEY);
+        const existingEmail = existing ? (() => { try { return JSON.parse(existing).email; } catch { return null; } })() : null;
+
         // Fetch user email from tokeninfo
         fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${response.access_token}`)
           .then(res => res.json())
@@ -131,15 +134,15 @@ export function signIn(): Promise<void> {
             localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
               access_token: response.access_token,
               expiry: expiryTime,
-              email: data.email || null,
+              email: data.email || existingEmail || null,
             }));
           })
           .catch(err => {
             console.error('Failed to get email:', err);
-            // Still store token even if email fetch fails
             localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
               access_token: response.access_token,
               expiry: expiryTime,
+              email: existingEmail || null,
             }));
           });
         
@@ -177,32 +180,55 @@ export function signOut(): void {
   }
 }
 
-// Silent token renewal - attempts to refresh token without user interaction
-export async function refreshTokenSilently(): Promise<boolean> {
+// Check if user has ever signed in (token record exists, even if expired)
+export function hasEverSignedIn(): boolean {
+  return !!localStorage.getItem(TOKEN_STORAGE_KEY);
+}
+
+// Silent token renewal - obtains a fresh access token without a UI popup.
+// Works when the user is still logged in to Google and has previously granted access.
+export function refreshTokenSilently(): Promise<boolean> {
   return new Promise((resolve) => {
     if (!tokenClient) {
-      console.warn('Token client not initialized');
       resolve(false);
       return;
     }
 
-    // Check if there's a stored token that's about to expire (within 5 minutes)
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-    if (storedToken) {
-      const tokenData = JSON.parse(storedToken);
-      const now = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
-      
-      // If token expires in less than 5 minutes, try to renew
-      if (tokenData.expiry - now < fiveMinutes) {
-        console.log('Token expiring soon, attempting silent renewal...');
-        tokenClient.requestAccessToken({ prompt: '' });
-        resolve(true);
+    const timeout = setTimeout(() => {
+      resolve(false);
+    }, 8000);
+
+    tokenClient.callback = (response: google.accounts.oauth2.TokenResponse) => {
+      clearTimeout(timeout);
+
+      if (!response || (response as any).error) {
+        resolve(false);
         return;
       }
+
+      if (response.access_token) {
+        gapi.client.setToken({ access_token: response.access_token });
+        const expiryTime = Date.now() + ((response.expires_in || 3600) * 1000);
+        // Preserve existing email
+        const existing = localStorage.getItem(TOKEN_STORAGE_KEY);
+        const existingEmail = existing ? (() => { try { return JSON.parse(existing).email; } catch { return null; } })() : null;
+        localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({
+          access_token: response.access_token,
+          expiry: expiryTime,
+          email: existingEmail,
+        }));
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    };
+
+    try {
+      tokenClient.requestAccessToken({ prompt: '' });
+    } catch {
+      clearTimeout(timeout);
+      resolve(false);
     }
-    
-    resolve(false);
   });
 }
 

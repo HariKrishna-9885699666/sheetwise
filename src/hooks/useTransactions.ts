@@ -105,6 +105,13 @@ export function useTransactions() {
       try {
         await sheetsApi.initializeGapi();
         sheetsApi.initializeGis();
+
+        // If user has signed in before, silently refresh the token so they
+        // don't have to sign in again on every page load.
+        if (sheetsApi.hasEverSignedIn()) {
+          await sheetsApi.refreshTokenSilently();
+        }
+
         setGapiReady(true);
         
         // Fetch user email if signed in

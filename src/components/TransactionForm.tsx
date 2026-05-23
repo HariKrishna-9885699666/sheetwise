@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { 
-  CalendarIcon,
   Bus,
   Receipt,
   Utensils,
@@ -22,10 +21,8 @@ import {
   Gift as GiftIcon,
   MoreHorizontal,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Transaction, CATEGORIES, ACCOUNTS } from "@/types/transaction";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +40,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DatePicker } from "@/components/ui/date-picker";
 import { SearchSelect } from "@/components/ui/search-select";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -259,41 +256,13 @@ export function TransactionForm({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-popover" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          disabled={(date) => {
-                            const tenDaysAgo = new Date();
-                            tenDaysAgo.setDate(tenDaysAgo.getDate() - 90);
-                            tenDaysAgo.setHours(0, 0, 0, 0);
-                            return date < tenDaysAgo;
-                          }}
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select date"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
