@@ -93,6 +93,7 @@ export function useTransactions() {
   const [useLocalData, setUseLocalData] = useState(true); // Fallback to local when API not configured
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [gapiReady, setGapiReady] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
 
   // Initialize Google API
   useEffect(() => {
@@ -459,6 +460,7 @@ export function useTransactions() {
     monthTabs,
     summary,
     isLoading,
+    isMutating,
     addTransaction,
     updateTransaction,
     deleteTransaction,
