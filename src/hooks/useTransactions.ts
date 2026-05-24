@@ -97,7 +97,7 @@ export function useTransactions() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const loadMonthData = useCallback(async (month: string) => {
-    if (!gapiReady || !sheetsApi.isSignedIn()) {
+    if (!sheetsApi.isSignedIn()) {
       setUseLocalData(true);
       return false;
     }
@@ -130,7 +130,7 @@ export function useTransactions() {
     } finally {
       setIsLoading(false);
     }
-  }, [gapiReady]);
+  }, []);
 
   // Initialize Google API
   useEffect(() => {
@@ -145,16 +145,14 @@ export function useTransactions() {
         await sheetsApi.initializeGapi();
         sheetsApi.initializeGis();
 
-        let signedIn = sheetsApi.isSignedIn();
-        if (sheetsApi.hasEverSignedIn()) {
-          setIsLoading(true);
-          signedIn = await sheetsApi.refreshTokenSilently();
-          setIsLoading(false);
-        }
+        // initializeGapi already restores a valid token from localStorage.
+        // Do NOT call refreshTokenSilently() here — on mobile it triggers the
+        // Google account-picker popup even with prompt:'', causing the loop.
+        const signedIn = sheetsApi.isSignedIn();
 
         setGapiReady(true);
         setUseLocalData(!signedIn);
-        
+
         if (signedIn) {
           const email = await sheetsApi.getUserEmail();
           setUserEmail(email);
@@ -197,7 +195,7 @@ export function useTransactions() {
     };
 
     loadTabs();
-  }, [gapiReady]);
+  }, [gapiReady, transactions]);
 
   const currentMonthTransactions = useMemo(() => {
     return (transactions[currentMonth] || []).filter((t) => !t.deleted);
@@ -461,22 +459,23 @@ export function useTransactions() {
       await sheetsApi.signIn();
       const email = await sheetsApi.getUserEmail();
       setUserEmail(email);
+      setGapiReady(true);   // must be true before loadMonthData checks it
       setUseLocalData(false);
 
       const month = getCurrentMonthTab();
       if (month !== currentMonth) {
         setCurrentMonth(month);
+        // the useEffect on currentMonth + gapiReady will trigger loadMonthData
+      } else {
+        await loadMonthData(month);
       }
-
-      await loadMonthData(month);
-      await loadAllMonths(true);
     } catch (error) {
       toast.error("Google Sign-In failed. Please try again.");
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  }, [currentMonth, loadAllMonths, loadMonthData]);
+  }, [currentMonth, loadMonthData]);
 
   return {
     transactions: currentMonthTransactions,
