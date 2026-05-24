@@ -235,10 +235,12 @@ const Index = () => {
 
   const handleSignInClick = async () => {
     await handleSignIn();
-    toast({
-      title: "Connected",
-      description: "Successfully connected to Google Sheets.",
-    });
+    if (sheetsApi.isSignedIn()) {
+      toast({
+        title: "Connected",
+        description: "Successfully connected to Google Sheets.",
+      });
+    }
   };
 
   if (isAuthLoading) {
@@ -275,7 +277,6 @@ const Index = () => {
         isConnected={isConnected}
         userEmail={userEmail}
         onSignOut={handleSignOut}
-        onSignIn={handleSignIn}
       />
 
       <main className="container px-4 py-4 md:py-8 md:px-6">

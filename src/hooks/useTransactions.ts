@@ -96,6 +96,42 @@ export function useTransactions() {
   const [isMutating, setIsMutating] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
+  const loadMonthData = useCallback(async (month: string) => {
+    if (!gapiReady || !sheetsApi.isSignedIn()) {
+      setUseLocalData(true);
+      return false;
+    }
+
+    setIsLoading(true);
+    try {
+      const tabExists = await sheetsApi.monthTabExists(month);
+      if (!tabExists) {
+        await sheetsApi.createMonthTab(month);
+        setTransactions((prev) => ({
+          ...prev,
+          [month]: [],
+        }));
+      } else {
+        const sheetData = await sheetsApi.readMonthData(month);
+        const txns = sheetData.map(sheetRowToTransaction);
+        setTransactions((prev) => ({
+          ...prev,
+          [month]: txns,
+        }));
+      }
+      setUseLocalData(false);
+      return true;
+    } catch (error: any) {
+      if (error?.message && !error.message.includes("Not authenticated")) {
+        toast.error("Failed to load data from Google Sheets");
+      }
+      setUseLocalData(true);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [gapiReady]);
+
   // Initialize Google API
   useEffect(() => {
     const initGoogleApi = async () => {
@@ -109,18 +145,17 @@ export function useTransactions() {
         await sheetsApi.initializeGapi();
         sheetsApi.initializeGis();
 
-        // If user has signed in before, silently refresh the token so they
-        // don't have to sign in again on every page load.
+        let signedIn = sheetsApi.isSignedIn();
         if (sheetsApi.hasEverSignedIn()) {
-          setIsLoading(true); // Show loading spinner during silent refresh
-          await sheetsApi.refreshTokenSilently();
+          setIsLoading(true);
+          signedIn = await sheetsApi.refreshTokenSilently();
           setIsLoading(false);
         }
 
         setGapiReady(true);
+        setUseLocalData(!signedIn);
         
-        // Fetch user email if signed in
-        if (sheetsApi.isSignedIn()) {
+        if (signedIn) {
           const email = await sheetsApi.getUserEmail();
           setUserEmail(email);
         }
@@ -137,46 +172,8 @@ export function useTransactions() {
 
   // Load data from Google Sheets when month changes
   useEffect(() => {
-    const loadMonthData = async () => {
-      if (!gapiReady || !sheetsApi.isSignedIn()) {
-        setUseLocalData(true);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // Check if month tab exists, create if it doesn't
-        const tabExists = await sheetsApi.monthTabExists(currentMonth);
-        if (!tabExists) {
-          await sheetsApi.createMonthTab(currentMonth);
-          // New tab will be empty, so set empty transactions
-          setTransactions(prev => ({
-            ...prev,
-            [currentMonth]: []
-          }));
-        } else {
-          // Tab exists, load data
-          const sheetData = await sheetsApi.readMonthData(currentMonth);
-          const txns = sheetData.map(sheetRowToTransaction);
-          setTransactions(prev => ({
-            ...prev,
-            [currentMonth]: txns
-          }));
-        }
-        setUseLocalData(false);
-      } catch (error: any) {
-        // Only show toast for real errors, not auth issues
-        if (error?.message && !error.message.includes('Not authenticated')) {
-          toast.error("Failed to load data from Google Sheets");
-        }
-        setUseLocalData(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadMonthData();
-  }, [currentMonth, gapiReady]);
+    void loadMonthData(currentMonth);
+  }, [currentMonth, loadMonthData]);
 
   // Load available month tabs
   useEffect(() => {
@@ -464,17 +461,22 @@ export function useTransactions() {
       await sheetsApi.signIn();
       const email = await sheetsApi.getUserEmail();
       setUserEmail(email);
-      setGapiReady(true); // Ensure gapi is ready after sign-in
-      setUseLocalData(false); // Switch to using API data
-      // Manually trigger data load after sign-in
-      setCurrentMonth(getCurrentMonthTab());
+      setUseLocalData(false);
+
+      const month = getCurrentMonthTab();
+      if (month !== currentMonth) {
+        setCurrentMonth(month);
+      }
+
+      await loadMonthData(month);
+      await loadAllMonths(true);
     } catch (error) {
       toast.error("Google Sign-In failed. Please try again.");
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentMonth, loadAllMonths, loadMonthData]);
 
   return {
     transactions: currentMonthTransactions,
