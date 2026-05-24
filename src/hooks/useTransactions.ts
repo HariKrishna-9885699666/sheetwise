@@ -221,7 +221,7 @@ export function useTransactions() {
       
       if (!useLocalData) {
         try {
-          setIsLoading(true);
+          setIsMutating(true);
           const sheetRow = await sheetsApi.addTransaction(monthTab, {
             date: data.date,
             expense: data.expense || 0,
@@ -245,7 +245,7 @@ export function useTransactions() {
           toast.error("Failed to save to Google Sheets");
           console.error(error);
         } finally {
-          setIsLoading(false);
+          setIsMutating(false);
         }
       }
       
@@ -295,7 +295,7 @@ export function useTransactions() {
 
       if (!useLocalData) {
         try {
-          setIsLoading(true);
+          setIsMutating(true);
           const updatedTransaction = { ...existingTransaction, ...updatedData };
           
           if (newMonth !== oldMonth) {
@@ -326,7 +326,7 @@ export function useTransactions() {
           console.error(error);
           return;
         } finally {
-          setIsLoading(false);
+          setIsMutating(false);
         }
       }
 
@@ -382,14 +382,14 @@ export function useTransactions() {
 
       if (!useLocalData && targetMonth) {
         try {
-          setIsLoading(true);
+          setIsMutating(true);
           await sheetsApi.deleteRowById(targetMonth, id);
         } catch (error) {
           toast.error("Failed to delete from Google Sheets");
           console.error(error);
           return;
         } finally {
-          setIsLoading(false);
+          setIsMutating(false);
         }
       }
 
