@@ -168,10 +168,12 @@ export function useTransactions() {
     initGoogleApi();
   }, []);
 
-  // Load data from Google Sheets when month changes
+  // Load data once gapiReady is true (handles restored-session on reopen)
+  // and whenever the displayed month changes.
   useEffect(() => {
+    if (!gapiReady) return;
     void loadMonthData(currentMonth);
-  }, [currentMonth, loadMonthData]);
+  }, [currentMonth, gapiReady]);
 
   // Load available month tabs
   useEffect(() => {
