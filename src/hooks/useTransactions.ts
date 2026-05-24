@@ -94,12 +94,14 @@ export function useTransactions() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [gapiReady, setGapiReady] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Initialize Google API
   useEffect(() => {
     const initGoogleApi = async () => {
       if (!sheetsApi.isApiConfigured) {
         setUseLocalData(true);
+        setIsAuthLoading(false);
         return;
       }
 
@@ -110,7 +112,9 @@ export function useTransactions() {
         // If user has signed in before, silently refresh the token so they
         // don't have to sign in again on every page load.
         if (sheetsApi.hasEverSignedIn()) {
+          setIsLoading(true); // Show loading spinner during silent refresh
           await sheetsApi.refreshTokenSilently();
+          setIsLoading(false);
         }
 
         setGapiReady(true);
@@ -123,6 +127,8 @@ export function useTransactions() {
       } catch (error) {
         console.error('Failed to initialize Google API:', error);
         setUseLocalData(true);
+      } finally {
+        setIsAuthLoading(false);
       }
     };
 
@@ -452,6 +458,23 @@ export function useTransactions() {
     [gapiReady]
   );
 
+  const handleSignIn = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await sheetsApi.signIn();
+      const email = await sheetsApi.getUserEmail();
+      setUserEmail(email);
+      setGapiReady(true); // Ensure gapi is ready after sign-in
+      // Manually trigger data load after sign-in
+      setCurrentMonth(getCurrentMonthTab());
+    } catch (error) {
+      toast.error("Google Sign-In failed. Please try again.");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     transactions: currentMonthTransactions,
     allTransactions: transactions,
@@ -461,10 +484,12 @@ export function useTransactions() {
     summary,
     isLoading,
     isMutating,
+    isAuthLoading,
     addTransaction,
     updateTransaction,
     deleteTransaction,
     loadAllMonths,
+    handleSignIn,
     isConnected: sheetsApi.isApiConfigured && sheetsApi.isSignedIn() && !useLocalData,
     userEmail,
   };

@@ -33,7 +33,6 @@ interface HeaderProps {
   isConnected: boolean;
   userEmail?: string | null;
   onSignOut?: () => void;
-  onSignIn?: () => void;
 }
 
 export function Header({
@@ -46,7 +45,6 @@ export function Header({
   isConnected,
   userEmail,
   onSignOut,
-  onSignIn,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -173,13 +171,10 @@ export function Header({
                       </Button>
                     )}
                     
-                    {!isConnected && onSignIn && (
+                    {!isConnected && (
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          onSignIn();
-                          setMobileMenuOpen(false);
-                        }}
+                        disabled
                         className="w-full justify-start gap-2"
                       >
                         <Sheet className="h-4 w-4 text-green-600" />
@@ -273,17 +268,6 @@ export function Header({
                     Running in demo mode. Connect to Google Sheets to sync data.
                   </TooltipContent>
                 </Tooltip>
-                {onSignIn && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onSignIn}
-                    className="h-8 gap-1.5 px-2.5 md:px-3 text-xs md:text-sm"
-                  >
-                    <Sheet className="h-3 w-3 md:h-3.5 md:w-3.5 text-green-600" />
-                    <span>Connect</span>
-                  </Button>
-                )}
               </>
             )}
           </div>

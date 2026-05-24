@@ -48,6 +48,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Loader2 } from "lucide-react";
 
 const categoryIcons: Record<string, any> = {
   "Food & Dining": UtensilsCrossed,
@@ -80,6 +81,8 @@ const Index = () => {
     loadAllMonths,
     isConnected,
     isLoading,
+    isAuthLoading,
+    handleSignIn,
     userEmail,
   } = useTransactions();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -230,22 +233,35 @@ const Index = () => {
     window.location.reload(); // Reload to reset state
   };
 
-  const handleSignIn = async () => {
-    try {
-      await sheetsApi.signIn();
-      toast({
-        title: "Connected",
-        description: "Successfully connected to Google Sheets.",
-      });
-      window.location.reload(); // Reload to fetch data
-    } catch (error) {
-      toast({
-        title: "Connection failed",
-        description: "Could not connect to Google Sheets. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleSignInClick = async () => {
+    await handleSignIn();
+    toast({
+      title: "Connected",
+      description: "Successfully connected to Google Sheets.",
+    });
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="flex h-screen items-center justify-center text-center">
+        <div>
+          <h1 className="text-2xl font-bold mb-4">Welcome to SheetWise</h1>
+          <p className="mb-6">Connect to Google Sheets to manage your expenses.</p>
+          <Button onClick={handleSignInClick}>
+            Connect to Google Sheets
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -319,7 +335,7 @@ const Index = () => {
                   className="w-full"
                 />
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
@@ -338,7 +354,7 @@ const Index = () => {
                   </SelectContent>
                 </Select>
                 <Select value={sort} onValueChange={setSort}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
