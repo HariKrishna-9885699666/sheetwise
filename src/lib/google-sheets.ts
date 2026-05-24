@@ -351,9 +351,6 @@ export async function readMonthData(monthName: string): Promise<SheetRow[]> {
     throw new Error("Not authenticated");
   }
   
-  // Try to refresh token if it's about to expire
-  await refreshTokenSilently();
-  
   try {
     const response = await gapi.client.sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
