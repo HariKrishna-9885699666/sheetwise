@@ -465,6 +465,7 @@ export function useTransactions() {
       const email = await sheetsApi.getUserEmail();
       setUserEmail(email);
       setGapiReady(true); // Ensure gapi is ready after sign-in
+      setUseLocalData(false); // Switch to using API data
       // Manually trigger data load after sign-in
       setCurrentMonth(getCurrentMonthTab());
     } catch (error) {
