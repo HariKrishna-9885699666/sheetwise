@@ -271,6 +271,22 @@ export async function getUserEmail(): Promise<string | null> {
   }
 }
 
+// Wrapper to handle automatic silent token refresh on 401 errors
+async function withAutoRefresh<T>(apiCall: () => Promise<T>): Promise<T> {
+  try {
+    return await apiCall();
+  } catch (error: any) {
+    if (error?.status === 401 || error?.result?.error?.code === 401) {
+      console.log('Token expired, attempting silent refresh...');
+      const refreshed = await refreshTokenSilently();
+      if (refreshed) {
+        return await apiCall();
+      }
+    }
+    throw error;
+  }
+}
+
 export interface SheetRow {
   id: string;
   date: string;
@@ -289,17 +305,19 @@ export async function getSheetTabs(): Promise<string[]> {
     throw new Error("Not authenticated");
   }
   
-  try {
-    const response = await gapi.client.sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-      fields: 'sheets.properties.title',
-    });
-    
-    return response.result.sheets?.map((sheet: any) => sheet.properties.title) || [];
-  } catch (error) {
-    console.error('Failed to fetch sheet tabs:', error);
-    throw error;
-  }
+  return withAutoRefresh(async () => {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+        fields: 'sheets.properties.title',
+      });
+      
+      return response.result.sheets?.map((sheet: any) => sheet.properties.title) || [];
+    } catch (error) {
+      console.error('Failed to fetch sheet tabs:', error);
+      throw error;
+    }
+  });
 }
 
 // Check if a specific month tab exists
@@ -318,31 +336,32 @@ export async function createMonthTab(monthName: string): Promise<void> {
     throw new Error("Not authenticated");
   }
   
-  try {
-    // Add the new sheet
-    await gapi.client.sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      resource: {
-        requests: [
-          {
-            addSheet: {
-              properties: { title: monthName }
+  return withAutoRefresh(async () => {
+    try {
+      // Add the new sheet
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: {
+          requests: [
+            {
+              addSheet: {
+                properties: { title: monthName }
+              }
             }
-          }
-        ]
-      }
-    });
-    
-    // Add header row
-    await appendRows(monthName, [
-      ["ID", "Date", "Expense ₹", "Category", "Account", "Notes", "Image", "CreatedAt", "UpdatedAt"]
-    ]);
-    
-
-  } catch (error) {
-    console.error('Failed to create month tab:', error);
-    throw error;
-  }
+          ]
+        }
+      });
+      
+      // Add header row
+      await appendRows(monthName, [
+        ["ID", "Date", "Expense ₹", "Category", "Account", "Notes", "Image", "CreatedAt", "UpdatedAt"]
+      ]);
+      
+    } catch (error) {
+      console.error('Failed to create month tab:', error);
+      throw error;
+    }
+  });
 }
 
 // Read all rows from a month tab
@@ -351,52 +370,54 @@ export async function readMonthData(monthName: string): Promise<SheetRow[]> {
     throw new Error("Not authenticated");
   }
   
-  try {
-    const response = await gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: monthName,
-    });
-    
-    const rows = response.result.values || [];
-    
-    // Skip header row, parse data rows, and filter out total row
-    if (rows.length <= 1) return [];
-    
-    return rows.slice(1)
-      .filter((row: any[]) => {
-        // Filter out total row (last column contains "TOTAL")
-        if (row[8] && row[8].toString().toUpperCase().includes('TOTAL')) {
-          return false;
-        }
-        // Filter out rows without ID or valid date
-        if (!row[0] || !row[1]) {
-          return false;
-        }
-        // Validate date is not empty or "Invalid Date"
-        const testDate = new Date(row[1]);
-        if (isNaN(testDate.getTime())) {
-          return false;
-        }
-        return true;
-      })
-      .map((row: any[]) => ({
-        id: row[0] || "",
-        date: row[1] || "",
-        expense: parseFloat(row[2]) || 0,
-        category: row[3] || "",
-        account: row[4] || "",
-        notes: row[5] || "",
-        image: row[6] || undefined,
-        createdAt: row[7] || "",
-        updatedAt: row[8] || "",
-      }));
-  } catch (error) {
-    if ((error as any).status === 404) {
-      return []; // Tab doesn't exist yet
+  return withAutoRefresh(async () => {
+    try {
+      const response = await gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: monthName,
+      });
+      
+      const rows = response.result.values || [];
+      
+      // Skip header row, parse data rows, and filter out total row
+      if (rows.length <= 1) return [];
+      
+      return rows.slice(1)
+        .filter((row: any[]) => {
+          // Filter out total row (last column contains "TOTAL")
+          if (row[8] && row[8].toString().toUpperCase().includes('TOTAL')) {
+            return false;
+          }
+          // Filter out rows without ID or valid date
+          if (!row[0] || !row[1]) {
+            return false;
+          }
+          // Validate date is not empty or "Invalid Date"
+          const testDate = new Date(row[1]);
+          if (isNaN(testDate.getTime())) {
+            return false;
+          }
+          return true;
+        })
+        .map((row: any[]) => ({
+          id: row[0] || "",
+          date: row[1] || "",
+          expense: parseFloat(row[2]) || 0,
+          category: row[3] || "",
+          account: row[4] || "",
+          notes: row[5] || "",
+          image: row[6] || undefined,
+          createdAt: row[7] || "",
+          updatedAt: row[8] || "",
+        }));
+    } catch (error) {
+      if ((error as any).status === 404) {
+        return []; // Tab doesn't exist yet
+      }
+      console.error('Failed to read month data:', error);
+      throw error;
     }
-    console.error('Failed to read month data:', error);
-    throw error;
-  }
+  });
 }
 
 // Append rows to a sheet
@@ -405,19 +426,21 @@ export async function appendRows(monthName: string, rows: (string | number)[][])
     throw new Error("Not authenticated");
   }
   
-  try {
-    await gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: monthName,
-      valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: rows
-      }
-    });
-  } catch (error) {
-    console.error('Failed to append rows:', error);
-    throw error;
-  }
+  return withAutoRefresh(async () => {
+    try {
+      await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: monthName,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: rows
+        }
+      });
+    } catch (error) {
+      console.error('Failed to append rows:', error);
+      throw error;
+    }
+  });
 }
 
 // Find row index by ID
@@ -437,36 +460,38 @@ export async function updateRowById(monthName: string, id: string, rowData: Shee
     throw new Error("Not authenticated");
   }
   
-  const rowIndex = await findRowIndexById(monthName, id);
-  if (!rowIndex) {
-    throw new Error(`Row with ID ${id} not found in ${monthName}`);
-  }
-  
-  const range = `${monthName}!A${rowIndex}:I${rowIndex}`;
-  
-  try {
-    await gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: range,
-      valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [[
-          rowData.id,
-          rowData.date,
-          rowData.expense || "",
-          rowData.category,
-          rowData.account,
-          rowData.notes,
-          rowData.image || "",
-          rowData.createdAt,
-          rowData.updatedAt
-        ]]
-      }
-    });
-  } catch (error) {
-    console.error('Failed to update row:', error);
-    throw error;
-  }
+  return withAutoRefresh(async () => {
+    const rowIndex = await findRowIndexById(monthName, id);
+    if (!rowIndex) {
+      throw new Error(`Row with ID ${id} not found in ${monthName}`);
+    }
+    
+    const range = `${monthName}!A${rowIndex}:I${rowIndex}`;
+    
+    try {
+      await gapi.client.sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: range,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [[
+            rowData.id,
+            rowData.date,
+            rowData.expense || "",
+            rowData.category,
+            rowData.account,
+            rowData.notes,
+            rowData.image || "",
+            rowData.createdAt,
+            rowData.updatedAt
+          ]]
+        }
+      });
+    } catch (error) {
+      console.error('Failed to update row:', error);
+      throw error;
+    }
+  });
 }
 
 // Delete a row by ID (hard delete)
@@ -475,13 +500,97 @@ export async function deleteRowById(monthName: string, id: string): Promise<void
     throw new Error("Not authenticated");
   }
   
-  const rowIndex = await findRowIndexById(monthName, id);
-  if (!rowIndex) {
-    throw new Error(`Row with ID ${id} not found in ${monthName}`);
+  return withAutoRefresh(async () => {
+    const rowIndex = await findRowIndexById(monthName, id);
+    if (!rowIndex) {
+      throw new Error(`Row with ID ${id} not found in ${monthName}`);
+    }
+    
+    try {
+      // Get sheet metadata
+      const metaResponse = await gapi.client.sheets.spreadsheets.get({
+        spreadsheetId: SPREADSHEET_ID,
+        fields: 'sheets.properties',
+      });
+      
+      const sheet = metaResponse.result.sheets?.find(
+        (s: any) => s.properties.title === monthName
+      );
+      
+      if (!sheet) {
+        throw new Error(`Sheet ${monthName} not found`);
+      }
+      
+      const sheetId = sheet.properties.sheetId;
+      
+      // Delete the row
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: {
+          requests: [
+            {
+              deleteDimension: {
+                range: {
+                  sheetId: sheetId,
+                  dimension: "ROWS",
+                  startIndex: rowIndex - 1, // 0-based
+                  endIndex: rowIndex // exclusive
+                }
+              }
+            }
+          ]
+        }
+      });
+    } catch (error) {
+      console.error('Failed to delete row:', error);
+      throw error;
+    }
+  });
+}
+
+// Add a new transaction to the appropriate month tab
+export async function addTransaction(monthName: string, rowData: Omit<SheetRow, "id" | "createdAt" | "updatedAt">): Promise<SheetRow> {
+  if (!isApiConfigured || !isSignedIn()) {
+    throw new Error("Not authenticated");
   }
   
-  try {
-    // Get sheet metadata
+  return withAutoRefresh(async () => {
+    // Check if month tab exists, create if not
+    const exists = await monthTabExists(monthName);
+    if (!exists) {
+      await createMonthTab(monthName);
+    }
+    
+    const now = new Date().toISOString(); // Full ISO string with time
+    const id = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const fullRow: SheetRow = {
+      ...rowData,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    // Find if there's a total row and insert before it
+    const allData = await gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${monthName}!A:I`
+    });
+    
+    const rows = allData.result.values || [];
+    let insertRowIndex = rows.length; // Default: append at end (0-based for API)
+    let needsRowInsertion = false;
+    
+    // Check if last row is a total row (contains "TOTAL" in last column - index 8)
+    if (rows.length > 1) {
+      const lastRow = rows[rows.length - 1];
+      if (lastRow[8] && lastRow[8].toString().toUpperCase().includes('TOTAL')) {
+        insertRowIndex = rows.length - 1; // Insert before total row (0-based)
+        needsRowInsertion = true;
+      }
+    }
+    
+    // Get sheet metadata to get sheetId
     const metaResponse = await gapi.client.sheets.spreadsheets.get({
       spreadsheetId: SPREADSHEET_ID,
       fields: 'sheets.properties',
@@ -497,197 +606,117 @@ export async function deleteRowById(monthName: string, id: string): Promise<void
     
     const sheetId = sheet.properties.sheetId;
     
-    // Delete the row
-    await gapi.client.sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      resource: {
-        requests: [
-          {
-            deleteDimension: {
-              range: {
-                sheetId: sheetId,
-                dimension: "ROWS",
-                startIndex: rowIndex - 1, // 0-based
-                endIndex: rowIndex // exclusive
+    // If we need to insert before total row, insert a new row first
+    if (needsRowInsertion) {
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: {
+          requests: [
+            {
+              insertDimension: {
+                range: {
+                  sheetId: sheetId,
+                  dimension: "ROWS",
+                  startIndex: insertRowIndex,
+                  endIndex: insertRowIndex + 1
+                },
+                inheritFromBefore: false
+              }
+            },
+            {
+              repeatCell: {
+                range: {
+                  sheetId: sheetId,
+                  startRowIndex: insertRowIndex,
+                  endRowIndex: insertRowIndex + 1
+                },
+                cell: {
+                  userEnteredFormat: {
+                    textFormat: { fontSize: 10, bold: false },
+                    backgroundColor: { red: 1, green: 1, blue: 1 },
+                    horizontalAlignment: "RIGHT"
+                  }
+                },
+                fields: "userEnteredFormat(textFormat,backgroundColor,horizontalAlignment)"
               }
             }
-          }
-        ]
-      }
-    });
-  } catch (error) {
-    console.error('Failed to delete row:', error);
-    throw error;
-  }
-}
-
-// Add a new transaction to the appropriate month tab
-export async function addTransaction(monthName: string, rowData: Omit<SheetRow, "id" | "createdAt" | "updatedAt">): Promise<SheetRow> {
-  if (!isApiConfigured || !isSignedIn()) {
-    throw new Error("Not authenticated");
-  }
-  
-  // Check if month tab exists, create if not
-  const exists = await monthTabExists(monthName);
-  if (!exists) {
-    await createMonthTab(monthName);
-  }
-  
-  const now = new Date().toISOString(); // Full ISO string with time
-  const id = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
-  const fullRow: SheetRow = {
-    ...rowData,
-    id,
-    createdAt: now,
-    updatedAt: now,
-  };
-  
-  // Find if there's a total row and insert before it
-  const allData = await gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${monthName}!A:I`
-  });
-  
-  const rows = allData.result.values || [];
-  let insertRowIndex = rows.length; // Default: append at end (0-based for API)
-  let needsRowInsertion = false;
-  
-  // Check if last row is a total row (contains "TOTAL" in last column - index 8)
-  if (rows.length > 1) {
-    const lastRow = rows[rows.length - 1];
-    if (lastRow[8] && lastRow[8].toString().toUpperCase().includes('TOTAL')) {
-      insertRowIndex = rows.length - 1; // Insert before total row (0-based)
-      needsRowInsertion = true;
+          ]
+        }
+      });
     }
-  }
-  
-  // Get sheet metadata to get sheetId
-  const metaResponse = await gapi.client.sheets.spreadsheets.get({
-    spreadsheetId: SPREADSHEET_ID,
-    fields: 'sheets.properties',
-  });
-  
-  const sheet = metaResponse.result.sheets?.find(
-    (s: any) => s.properties.title === monthName
-  );
-  
-  if (!sheet) {
-    throw new Error(`Sheet ${monthName} not found`);
-  }
-  
-  const sheetId = sheet.properties.sheetId;
-  
-  // If we need to insert before total row, insert a new row first
-  if (needsRowInsertion) {
-    await gapi.client.sheets.spreadsheets.batchUpdate({
+    
+    // Now write the data to the inserted/appended row
+    await gapi.client.sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      resource: {
-        requests: [
-          {
-            insertDimension: {
-              range: {
-                sheetId: sheetId,
-                dimension: "ROWS",
-                startIndex: insertRowIndex,
-                endIndex: insertRowIndex + 1
-              },
-              inheritFromBefore: false
-            }
-          },
-          {
-            repeatCell: {
-              range: {
-                sheetId: sheetId,
-                startRowIndex: insertRowIndex,
-                endRowIndex: insertRowIndex + 1
-              },
-              cell: {
-                userEnteredFormat: {
-                  textFormat: { fontSize: 10, bold: false },
-                  backgroundColor: { red: 1, green: 1, blue: 1 },
-                  horizontalAlignment: "RIGHT"
-                }
-              },
-              fields: "userEnteredFormat(textFormat,backgroundColor,horizontalAlignment)"
-            }
-          }
-        ]
-      }
-    });
-  }
-  
-  // Now write the data to the inserted/appended row
-  await gapi.client.sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${monthName}!A${insertRowIndex + 1}:I${insertRowIndex + 1}`,
-    valueInputOption: 'USER_ENTERED',
-    resource: {
-      values: [[
-        fullRow.id,
-        fullRow.date,
-        fullRow.expense || "",
-        fullRow.category,
-        fullRow.account,
-        fullRow.notes,
-        fullRow.image || "",
-        fullRow.createdAt,
-        fullRow.updatedAt
-      ]]
-    }
-  });
-  
-  // If this is the first transaction (no total row existed), add the total row now
-  if (!needsRowInsertion) {
-    const totalRowIndex = rows.length + 1; // +1 for 1-based indexing
-    await gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${monthName}!A:I`,
+      range: `${monthName}!A${insertRowIndex + 1}:I${insertRowIndex + 1}`,
       valueInputOption: 'USER_ENTERED',
       resource: {
-        values: [["", "", `=SUM(C2:C${totalRowIndex})`, "", "", "", "", "", "TOTAL EXPENSE"]]
+        values: [[
+          fullRow.id,
+          fullRow.date,
+          fullRow.expense || "",
+          fullRow.category,
+          fullRow.account,
+          fullRow.notes,
+          fullRow.image || "",
+          fullRow.createdAt,
+          fullRow.updatedAt
+        ]]
       }
     });
     
-    // Format the new total row
-    await gapi.client.sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      resource: {
-        requests: [
-          {
-            repeatCell: {
-              range: {
-                sheetId: sheetId,
-                startRowIndex: totalRowIndex,
-                endRowIndex: totalRowIndex + 1,
-              },
-              cell: {
-                userEnteredFormat: {
-                  textFormat: { fontSize: 16, bold: true },
-                  backgroundColor: { red: 1, green: 0.9, blue: 0.7 },
-                  horizontalAlignment: "CENTER"
-                }
-              },
-              fields: "userEnteredFormat(textFormat,backgroundColor,horizontalAlignment)"
+    // If this is the first transaction (no total row existed), add the total row now
+    if (!needsRowInsertion) {
+      const totalRowIndex = rows.length + 1; // +1 for 1-based indexing
+      await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${monthName}!A:I`,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [["", "", `=SUM(C2:C${totalRowIndex})`, "", "", "", "", "", "TOTAL EXPENSE"]]
+        }
+      });
+      
+      // Format the new total row
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: {
+          requests: [
+            {
+              repeatCell: {
+                range: {
+                  sheetId: sheetId,
+                  startRowIndex: totalRowIndex,
+                  endRowIndex: totalRowIndex + 1,
+                },
+                cell: {
+                  userEnteredFormat: {
+                    textFormat: { fontSize: 16, bold: true },
+                    backgroundColor: { red: 1, green: 0.9, blue: 0.7 },
+                    horizontalAlignment: "CENTER"
+                  }
+                },
+                fields: "userEnteredFormat(textFormat,backgroundColor,horizontalAlignment)"
+              }
             }
-          }
-        ]
-      }
-    });
-  }
-  
-  // Update the total formula if we inserted before existing total row
-  if (needsRowInsertion) {
-    const totalRowIndex = insertRowIndex + 2; // +1 for the row we just inserted, +1 for 1-based
-    await gapi.client.sheets.spreadsheets.values.update({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${monthName}!C${totalRowIndex}`,
-      valueInputOption: 'USER_ENTERED',
-      resource: {
-        values: [[`=SUM(C2:C${totalRowIndex - 1})`]]
-      }
-    });
-  }
-  
-  return fullRow;
+          ]
+        }
+      });
+    }
+    
+    // Update the total formula if we inserted before existing total row
+    if (needsRowInsertion) {
+      const totalRowIndex = insertRowIndex + 2; // +1 for the row we just inserted, +1 for 1-based
+      await gapi.client.sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${monthName}!C${totalRowIndex}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [[`=SUM(C2:C${totalRowIndex - 1})`]]
+        }
+      });
+    }
+    
+    return fullRow;
+  });
 }
