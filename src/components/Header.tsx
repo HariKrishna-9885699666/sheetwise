@@ -1,4 +1,17 @@
-import { Wallet, Plus, Cloud, User, Sheet, ChevronDown, FileText, Files, Search, Sun, Moon, Monitor } from "lucide-react";
+import {
+  Wallet,
+  Plus,
+  Cloud,
+  User,
+  Sheet,
+  ChevronDown,
+  FileText,
+  Files,
+  Search,
+  Sun,
+  Moon,
+  Monitor,
+} from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -53,7 +66,12 @@ export function Header({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className={`h-9 w-9 ${className ?? ""}`} aria-label="Toggle theme">
+          <Button
+            variant="outline"
+            size="icon"
+            className={`h-9 w-9 ${className ?? ""}`}
+            aria-label="Toggle theme"
+          >
             {theme === "dark" ? (
               <Moon className="h-4 w-4" />
             ) : theme === "light" ? (
@@ -83,7 +101,10 @@ export function Header({
       <div className="container flex min-h-[64px] flex-wrap items-center justify-between gap-2 px-3 py-2 md:h-16 md:flex-nowrap md:px-6 md:py-0">
         <div className="flex items-center gap-2 md:gap-4">
           {/* Hamburger Menu - Mobile Only */}
-          <SheetComponent open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetComponent
+            open={mobileMenuOpen}
+            onOpenChange={setMobileMenuOpen}
+          >
             <SheetTrigger asChild>
               <button className="flex flex-col gap-1.5 p-3 md:hidden hover:bg-accent rounded-md transition-colors">
                 <div className="w-8 h-1 bg-foreground rounded-full"></div>
@@ -103,16 +124,20 @@ export function Header({
                   Manage your expenses with Google Sheets
                 </SheetDescription>
               </SheetHeader>
-              
+
               <div className="mt-6 space-y-4">
                 {/* Connection Status */}
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Status</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    Status
+                  </h3>
                   {isConnected && userEmail ? (
                     <div className="rounded-lg border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-950/40 p-3">
                       <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                         <Sheet className="h-4 w-4" />
-                        <span className="font-medium">Connected to Google Sheets</span>
+                        <span className="font-medium">
+                          Connected to Google Sheets
+                        </span>
                       </div>
                       <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-500">
                         <User className="h-3.5 w-3.5" />
@@ -134,30 +159,32 @@ export function Header({
 
                 {/* Actions */}
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Actions</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    Actions
+                  </h3>
                   <div className="space-y-2">
-                    <Button 
+                    <Button
                       onClick={() => {
                         onAddTransaction();
                         setMobileMenuOpen(false);
-                      }} 
+                      }}
                       className="w-full justify-start gap-2"
                     >
                       <FileText className="h-4 w-4" />
                       Single Expense
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => {
                         onAddBulkExpense();
                         setMobileMenuOpen(false);
-                      }} 
+                      }}
                       variant="outline"
                       className="w-full justify-start gap-2"
                     >
                       <Files className="h-4 w-4" />
                       Multiple Expenses
                     </Button>
-                    
+
                     {isConnected && onSignOut && (
                       <Button
                         variant="outline"
@@ -170,7 +197,7 @@ export function Header({
                         Sign Out
                       </Button>
                     )}
-                    
+
                     {!isConnected && (
                       <Button
                         variant="outline"
@@ -211,8 +238,10 @@ export function Header({
         <div className="flex items-center gap-1.5 md:gap-2">
           {/* Mobile: Connection Status Indicator & Search */}
           <div className="flex items-center gap-2 md:hidden">
-            <div title={isConnected ? 'Connected' : 'Not Connected'}>
-              <Cloud className={`h-5 w-5 ${isConnected ? 'text-green-500 fill-green-500' : 'text-gray-400 fill-gray-400'}`} />
+            <div title={isConnected ? "Connected" : "Not Connected"}>
+              <Cloud
+                className={`h-5 w-5 ${isConnected ? "text-green-500 fill-green-500" : "text-gray-400 fill-gray-400"}`}
+              />
             </div>
             <Button
               variant="ghost"
@@ -238,8 +267,12 @@ export function Header({
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="text-left">
-                      <div className="font-medium">Connected to Google Sheets</div>
-                      <div className="text-xs text-muted-foreground">Signed in as {userEmail}</div>
+                      <div className="font-medium">
+                        Connected to Google Sheets
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Signed in as {userEmail}
+                      </div>
                     </div>
                   </TooltipContent>
                 </Tooltip>

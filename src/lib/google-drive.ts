@@ -1,4 +1,4 @@
-import { gapi } from 'gapi-script';
+import { gapi } from "gapi-script";
 
 // Find existing folder by name in Google Drive (searches everywhere)
 async function findFolderByName(folderName: string): Promise<string | null> {
@@ -11,17 +11,19 @@ async function findFolderByName(folderName: string): Promise<string | null> {
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,parents)&orderBy=createdTime&pageSize=10`,
     {
       headers: {
-        'Authorization': 'Bearer ' + accessToken,
+        Authorization: "Bearer " + accessToken,
       },
-    }
+    },
   );
 
   if (!searchResponse.ok) {
-    throw new Error(`Failed to search for folder: ${searchResponse.statusText}`);
+    throw new Error(
+      `Failed to search for folder: ${searchResponse.statusText}`,
+    );
   }
 
   const searchData = await searchResponse.json();
-  
+
   if (searchData.files && searchData.files.length > 0) {
     return searchData.files[0].id;
   }
@@ -30,29 +32,31 @@ async function findFolderByName(folderName: string): Promise<string | null> {
 }
 
 // Create a new folder in Google Drive
-async function createFolder(folderName: string, parentFolderId?: string): Promise<string> {
+async function createFolder(
+  folderName: string,
+  parentFolderId?: string,
+): Promise<string> {
   const accessToken = gapi.client.getToken().access_token;
-  
-  
-  const metadata: any = {
+
+  const metadata: Record<string, string> = {
     name: folderName,
-    mimeType: 'application/vnd.google-apps.folder',
+    mimeType: "application/vnd.google-apps.folder",
   };
-  
+
   if (parentFolderId) {
     metadata.parents = [parentFolderId];
   }
 
   const createResponse = await fetch(
-    'https://www.googleapis.com/drive/v3/files?fields=id',
+    "https://www.googleapis.com/drive/v3/files?fields=id",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + accessToken,
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken,
       },
       body: JSON.stringify(metadata),
-    }
+    },
   );
 
   if (!createResponse.ok) {
@@ -66,25 +70,26 @@ async function createFolder(folderName: string, parentFolderId?: string): Promis
 // Get or create the folder structure: Monthly Expenses > Images
 async function getImagesFolderId(): Promise<string> {
   // First, find existing "Monthly Expenses" folder
-  let monthlyExpensesFolderId = await findFolderByName('Monthly Expenses');
-  
+  let monthlyExpensesFolderId = await findFolderByName("Monthly Expenses");
+
   if (!monthlyExpensesFolderId) {
-    console.warn('No existing "Monthly Expenses" folder found, creating new one');
-    monthlyExpensesFolderId = await createFolder('Monthly Expenses');
-  } else {
+    console.warn(
+      'No existing "Monthly Expenses" folder found, creating new one',
+    );
+    monthlyExpensesFolderId = await createFolder("Monthly Expenses");
   }
-  
+
   // Now find or create "Images" folder inside Monthly Expenses
   const accessToken = gapi.client.getToken().access_token;
   const query = `name='Images' and mimeType='application/vnd.google-apps.folder' and trashed=false and '${monthlyExpensesFolderId}' in parents`;
-  
+
   const searchResponse = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
     {
       headers: {
-        'Authorization': 'Bearer ' + accessToken,
+        Authorization: "Bearer " + accessToken,
       },
-    }
+    },
   );
 
   if (searchResponse.ok) {
@@ -93,15 +98,15 @@ async function getImagesFolderId(): Promise<string> {
       return searchData.files[0].id;
     }
   }
-  
+
   // Create Images folder inside Monthly Expenses
-  const imagesFolderId = await createFolder('Images', monthlyExpensesFolderId);
+  const imagesFolderId = await createFolder("Images", monthlyExpensesFolderId);
   return imagesFolderId;
 }
 
 // Upload an image file to Google Drive and return the public URL
 export async function uploadImageToDrive(file: File): Promise<string> {
-  const boundary = '-------314159265358979323846';
+  const boundary = "-------314159265358979323846";
   const delimiter = "\r\n--" + boundary + "\r\n";
   const close_delim = "\r\n--" + boundary + "--";
 
@@ -110,7 +115,7 @@ export async function uploadImageToDrive(file: File): Promise<string> {
 
   // Read file as base64
   const base64Data = await fileToBase64(file);
-  const base64Body = base64Data.split(',')[1]; // Remove data URL prefix
+  const base64Body = base64Data.split(",")[1]; // Remove data URL prefix
 
   const metadata = {
     name: `expense_${Date.now()}_${file.name}`,
@@ -120,26 +125,28 @@ export async function uploadImageToDrive(file: File): Promise<string> {
 
   const multipartRequestBody =
     delimiter +
-    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
     JSON.stringify(metadata) +
     delimiter +
-    'Content-Type: ' + file.type + '\r\n' +
-    'Content-Transfer-Encoding: base64\r\n\r\n' +
+    "Content-Type: " +
+    file.type +
+    "\r\n" +
+    "Content-Transfer-Encoding: base64\r\n\r\n" +
     base64Body +
     close_delim;
 
   const accessToken = gapi.client.getToken().access_token;
 
   const response = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'multipart/related; boundary="' + boundary + '"',
-        'Authorization': 'Bearer ' + accessToken,
+        "Content-Type": 'multipart/related; boundary="' + boundary + '"',
+        Authorization: "Bearer " + accessToken,
       },
       body: multipartRequestBody,
-    }
+    },
   );
 
   if (!response.ok) {
@@ -164,24 +171,26 @@ async function makeFilePublic(fileId: string): Promise<void> {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + accessToken,
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken,
       },
       body: JSON.stringify({
-        role: 'reader',
-        type: 'anyone',
+        role: "reader",
+        type: "anyone",
       }),
-    }
+    },
   );
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`Failed to make file public: ${response.statusText}`, errorText);
+    console.error(
+      `Failed to make file public: ${response.statusText}`,
+      errorText,
+    );
     throw new Error(`Failed to make file public: ${response.statusText}`);
   }
-
 }
 
 // Helper to convert File to base64
@@ -197,7 +206,7 @@ function fileToBase64(file: File): Promise<string> {
 // Extract file ID from Drive URL
 export function extractFileIdFromUrl(url: string): string | null {
   if (!url) return null;
-  
+
   // Match various Drive URL formats
   const patterns = [
     /drive\.google\.com\/uc\?export=view&id=([^&]+)/,
@@ -207,14 +216,14 @@ export function extractFileIdFromUrl(url: string): string | null {
     /drive\.google\.com\/file\/d\/([^/]+)/,
     /drive\.google\.com\/open\?id=([^&]+)/,
   ];
-  
+
   for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match && match[1]) {
       return match[1];
     }
   }
-  
+
   return null;
 }
 
@@ -222,7 +231,7 @@ export function extractFileIdFromUrl(url: string): string | null {
 export async function deleteImageFromDrive(imageUrl: string): Promise<void> {
   const fileId = extractFileIdFromUrl(imageUrl);
   if (!fileId) {
-    console.warn('Could not extract file ID from URL:', imageUrl);
+    console.warn("Could not extract file ID from URL:", imageUrl);
     return;
   }
 
@@ -231,16 +240,15 @@ export async function deleteImageFromDrive(imageUrl: string): Promise<void> {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}`,
     {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'Authorization': 'Bearer ' + accessToken,
+        Authorization: "Bearer " + accessToken,
       },
-    }
+    },
   );
 
   if (!response.ok) {
     console.error(`Failed to delete file ${fileId}:`, response.statusText);
     throw new Error(`Failed to delete file: ${response.statusText}`);
   }
-
 }

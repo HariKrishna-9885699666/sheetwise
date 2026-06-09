@@ -40,26 +40,87 @@ interface TransactionListProps {
   onDelete: (id: string) => void;
 }
 
-const categoryColors: Record<string, { bg: string; text: string; icon: any }> = {
-  "Food & Dining": { bg: "bg-orange-100 dark:bg-orange-900/40", text: "text-orange-700 dark:text-orange-300", icon: UtensilsCrossed },
-  Transportation: { bg: "bg-blue-100 dark:bg-blue-900/40", text: "text-blue-700 dark:text-blue-300", icon: Car },
-  Shopping: { bg: "bg-pink-100 dark:bg-pink-900/40", text: "text-pink-700 dark:text-pink-300", icon: ShoppingBag },
-  Entertainment: { bg: "bg-purple-100 dark:bg-purple-900/40", text: "text-purple-700 dark:text-purple-300", icon: Popcorn },
-  "Bills & Utilities": { bg: "bg-slate-100 dark:bg-slate-800/60", text: "text-slate-700 dark:text-slate-300", icon: Zap },
-  Healthcare: { bg: "bg-red-100 dark:bg-red-900/40", text: "text-red-700 dark:text-red-300", icon: Heart },
-  Education: { bg: "bg-indigo-100 dark:bg-indigo-900/40", text: "text-indigo-700 dark:text-indigo-300", icon: GraduationCap },
-  Travel: { bg: "bg-cyan-100 dark:bg-cyan-900/40", text: "text-cyan-700 dark:text-cyan-300", icon: Plane },
-  Salary: { bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300", icon: Wallet },
-  Freelance: { bg: "bg-teal-100 dark:bg-teal-900/40", text: "text-teal-700 dark:text-teal-300", icon: Briefcase },
-  Investment: { bg: "bg-amber-100 dark:bg-amber-900/40", text: "text-amber-700 dark:text-amber-300", icon: TrendingUpIcon },
-  Gift: { bg: "bg-rose-100 dark:bg-rose-900/40", text: "text-rose-700 dark:text-rose-300", icon: GiftIcon },
-  Other: { bg: "bg-gray-100 dark:bg-gray-800/60", text: "text-gray-700 dark:text-gray-300", icon: MoreHorizontal },
+const categoryColors: Record<
+  string,
+  {
+    bg: string;
+    text: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  "Food & Dining": {
+    bg: "bg-orange-100 dark:bg-orange-900/40",
+    text: "text-orange-700 dark:text-orange-300",
+    icon: UtensilsCrossed,
+  },
+  Transportation: {
+    bg: "bg-blue-100 dark:bg-blue-900/40",
+    text: "text-blue-700 dark:text-blue-300",
+    icon: Car,
+  },
+  Shopping: {
+    bg: "bg-pink-100 dark:bg-pink-900/40",
+    text: "text-pink-700 dark:text-pink-300",
+    icon: ShoppingBag,
+  },
+  Entertainment: {
+    bg: "bg-purple-100 dark:bg-purple-900/40",
+    text: "text-purple-700 dark:text-purple-300",
+    icon: Popcorn,
+  },
+  "Bills & Utilities": {
+    bg: "bg-slate-100 dark:bg-slate-800/60",
+    text: "text-slate-700 dark:text-slate-300",
+    icon: Zap,
+  },
+  Healthcare: {
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-700 dark:text-red-300",
+    icon: Heart,
+  },
+  Education: {
+    bg: "bg-indigo-100 dark:bg-indigo-900/40",
+    text: "text-indigo-700 dark:text-indigo-300",
+    icon: GraduationCap,
+  },
+  Travel: {
+    bg: "bg-cyan-100 dark:bg-cyan-900/40",
+    text: "text-cyan-700 dark:text-cyan-300",
+    icon: Plane,
+  },
+  Salary: {
+    bg: "bg-emerald-100 dark:bg-emerald-900/40",
+    text: "text-emerald-700 dark:text-emerald-300",
+    icon: Wallet,
+  },
+  Freelance: {
+    bg: "bg-teal-100 dark:bg-teal-900/40",
+    text: "text-teal-700 dark:text-teal-300",
+    icon: Briefcase,
+  },
+  Investment: {
+    bg: "bg-amber-100 dark:bg-amber-900/40",
+    text: "text-amber-700 dark:text-amber-300",
+    icon: TrendingUpIcon,
+  },
+  Gift: {
+    bg: "bg-rose-100 dark:bg-rose-900/40",
+    text: "text-rose-700 dark:text-rose-300",
+    icon: GiftIcon,
+  },
+  Other: {
+    bg: "bg-gray-100 dark:bg-gray-800/60",
+    text: "text-gray-700 dark:text-gray-300",
+    icon: MoreHorizontal,
+  },
 };
 
 // Group transactions by date
-function groupTransactionsByDate(transactions: Transaction[]): Map<string, Transaction[]> {
+function groupTransactionsByDate(
+  transactions: Transaction[],
+): Map<string, Transaction[]> {
   const grouped = new Map<string, Transaction[]>();
-  
+
   transactions.forEach((transaction) => {
     const dateKey = format(new Date(transaction.date), "yyyy-MM-dd");
     if (!grouped.has(dateKey)) {
@@ -67,7 +128,7 @@ function groupTransactionsByDate(transactions: Transaction[]): Map<string, Trans
     }
     grouped.get(dateKey)!.push(transaction);
   });
-  
+
   return grouped;
 }
 
@@ -76,7 +137,10 @@ export function TransactionList({
   onEdit,
   onDelete,
 }: TransactionListProps) {
-  const totalExpenses = transactions.reduce((sum, t) => sum + (t.expense || 0), 0);
+  const totalExpenses = transactions.reduce(
+    (sum, t) => sum + (t.expense || 0),
+    0,
+  );
   const groupedTransactions = groupTransactionsByDate(transactions);
   const sortedDates = Array.from(groupedTransactions.keys()).sort().reverse();
 
@@ -100,18 +164,23 @@ export function TransactionList({
       {transactions.length > 0 && (
         <div className="border-b-2 border-border bg-muted/60 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-foreground">TOTAL EXPENSES</span>
+            <span className="text-xl font-bold text-foreground">
+              TOTAL EXPENSES
+            </span>
             <span className="text-2xl font-bold text-orange-500 dark:text-orange-400">
               {formatCurrency(totalExpenses)}
             </span>
           </div>
         </div>
       )}
-      
+
       <div className="divide-y divide-border">
         {sortedDates.map((dateKey) => {
           const dayTransactions = groupedTransactions.get(dateKey)!;
-          const dayTotal = dayTransactions.reduce((sum, t) => sum + (t.expense || 0), 0);
+          const dayTotal = dayTransactions.reduce(
+            (sum, t) => sum + (t.expense || 0),
+            0,
+          );
           const displayDate = format(new Date(dateKey), "dd MMM yyyy, EEEE");
           const today = new Date();
           const tenDaysAgo = new Date(today);
@@ -123,7 +192,9 @@ export function TransactionList({
               <div className="bg-muted/50 px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="font-semibold text-foreground text-sm sm:text-base">{displayDate}</span>
+                  <span className="font-semibold text-foreground text-sm sm:text-base">
+                    {displayDate}
+                  </span>
                 </div>
                 <span className="font-mono font-semibold text-orange-600 dark:text-orange-400 text-sm sm:text-base whitespace-nowrap">
                   -{formatCurrency(dayTotal)}
@@ -141,7 +212,7 @@ export function TransactionList({
                   const CategoryIcon = colors.icon;
                   const transactionDate = new Date(transaction.date);
                   const isEditable = transactionDate >= tenDaysAgo;
-                  
+
                   return (
                     <div
                       key={transaction.id}
@@ -157,7 +228,7 @@ export function TransactionList({
                               className={cn(
                                 "font-medium border-0 w-fit text-xs flex items-center gap-1.5",
                                 colors.bg,
-                                colors.text
+                                colors.text,
                               )}
                             >
                               <CategoryIcon className="h-3 w-3" />
@@ -171,8 +242,10 @@ export function TransactionList({
                               {transaction.image && (
                                 <>
                                   <span>•</span>
-                                  <button 
-                                    onClick={() => window.open(transaction.image, '_blank')}
+                                  <button
+                                    onClick={() =>
+                                      window.open(transaction.image, "_blank")
+                                    }
                                     className="inline-flex items-center gap-1 hover:text-primary transition-colors"
                                   >
                                     <ImageIcon className="h-3 w-3" />
@@ -218,7 +291,7 @@ export function TransactionList({
                             className={cn(
                               "font-medium border-0 flex items-center gap-1.5 w-fit",
                               colors.bg,
-                              colors.text
+                              colors.text,
                             )}
                           >
                             <CategoryIcon className="h-3.5 w-3.5" />
@@ -233,15 +306,19 @@ export function TransactionList({
                         </div>
                         <div className="text-center">
                           {transaction.image ? (
-                            <button 
-                              onClick={() => window.open(transaction.image, '_blank')}
+                            <button
+                              onClick={() =>
+                                window.open(transaction.image, "_blank")
+                              }
                               className="inline-flex items-center justify-center p-2 rounded hover:bg-accent transition-colors"
                               title="Open image in new tab"
                             >
                               <ImageIcon className="h-5 w-5 text-muted-foreground hover:text-primary" />
                             </button>
                           ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
+                            <span className="text-muted-foreground text-xs">
+                              —
+                            </span>
                           )}
                         </div>
                         <div className="text-right">
@@ -270,7 +347,9 @@ export function TransactionList({
                               </Button>
                             </div>
                           ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
+                            <span className="text-muted-foreground text-xs">
+                              —
+                            </span>
                           )}
                         </div>
                       </div>
@@ -285,7 +364,9 @@ export function TransactionList({
       {transactions.length > 0 && (
         <div className="border-t-2 border-border bg-muted/60 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-foreground">TOTAL EXPENSES</span>
+            <span className="text-xl font-bold text-foreground">
+              TOTAL EXPENSES
+            </span>
             <span className="text-2xl font-bold text-orange-500 dark:text-orange-400">
               {formatCurrency(totalExpenses)}
             </span>

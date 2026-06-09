@@ -12,14 +12,20 @@ interface SearchSelectProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  iconMap?: Record<string, any>;
+  iconMap?: Record<string, React.ComponentType<{ className?: string }>>;
 }
 
-export function SearchSelect({ options, value, onChange, placeholder, iconMap }: SearchSelectProps) {
+export function SearchSelect({
+  options,
+  value,
+  onChange,
+  placeholder,
+  iconMap,
+}: SearchSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const filtered = options.filter((option) =>
-    option.toLowerCase().includes(search.toLowerCase())
+    option.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -54,9 +60,7 @@ export function SearchSelect({ options, value, onChange, placeholder, iconMap }:
                       setSearch("");
                     }}
                   >
-                    {Icon && (
-                      <Icon className="h-4 w-4 mr-2" />
-                    )}
+                    {Icon && <Icon className="h-4 w-4 mr-2" />}
                     {option}
                   </CommandItem>
                 );

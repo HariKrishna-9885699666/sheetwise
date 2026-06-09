@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
-import { 
+import {
   Bus,
   Receipt,
   Utensils,
@@ -46,7 +46,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   date: z.date({ required_error: "Date is required" }),
-  amount: z.number({ required_error: "Amount is required" }).positive("Amount must be positive"),
+  amount: z
+    .number({ required_error: "Amount is required" })
+    .positive("Amount must be positive"),
   category: z.string().min(1, "Category is required"),
   account: z.string().min(1, "Account is required"),
   notes: z.string().optional(),
@@ -55,7 +57,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   "Food & Dining": UtensilsCrossed,
   Transportation: Car,
   Shopping: ShoppingBag,
@@ -75,7 +80,9 @@ interface TransactionFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction?: Transaction | null;
-  onSubmit: (data: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deleted">) => void;
+  onSubmit: (
+    data: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deleted">,
+  ) => void;
 }
 
 export function TransactionForm({
@@ -152,7 +159,7 @@ export function TransactionForm({
       form.setError("image", { message: "Image must be less than 1MB" });
       return;
     }
-    
+
     // Resize image for preview only
     const img = new window.Image();
     const reader = new FileReader();
@@ -162,13 +169,21 @@ export function TransactionForm({
         // Resize for preview
         const canvas = document.createElement("canvas");
         const maxDim = 600;
-        let w = img.width, h = img.height;
+        let w = img.width,
+          h = img.height;
         if (w > h) {
-          if (w > maxDim) { h *= maxDim / w; w = maxDim; }
+          if (w > maxDim) {
+            h *= maxDim / w;
+            w = maxDim;
+          }
         } else {
-          if (h > maxDim) { w *= maxDim / h; h = maxDim; }
+          if (h > maxDim) {
+            w *= maxDim / h;
+            h = maxDim;
+          }
         }
-        canvas.width = w; canvas.height = h;
+        canvas.width = w;
+        canvas.height = h;
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, w, h);
@@ -187,36 +202,37 @@ export function TransactionForm({
     try {
       let imageUrl = values.image || "";
       const oldImageUrl = transaction?.image; // Store old image URL for deletion
-      
+
       // If there's a new file selected, upload it to Drive
       if (selectedFile) {
         toast({
           title: "Uploading image...",
-          description: "Please wait while we upload your receipt to Google Drive.",
+          description:
+            "Please wait while we upload your receipt to Google Drive.",
         });
-        
+
         // Delete old image if it exists and we're replacing it
         if (oldImageUrl && isEditing) {
           try {
             await deleteImageFromDrive(oldImageUrl);
           } catch (error) {
-            console.warn('Failed to delete old image:', error);
+            console.warn("Failed to delete old image:", error);
             // Continue even if deletion fails
           }
         }
-        
+
         imageUrl = await uploadImageToDrive(selectedFile);
       }
 
       const data = {
-        date: `${format(values.date, "yyyy-MM-dd")}T${new Date().toTimeString().split(' ')[0]}`,
+        date: `${format(values.date, "yyyy-MM-dd")}T${new Date().toTimeString().split(" ")[0]}`,
         expense: values.amount,
         category: values.category,
         account: values.account,
         notes: values.notes || "",
         image: imageUrl,
       };
-      
+
       onSubmit(data);
       onOpenChange(false);
       form.reset();
@@ -226,7 +242,8 @@ export function TransactionForm({
       console.error("Error uploading image:", error);
       toast({
         title: "Upload failed",
-        description: "Failed to upload image to Google Drive. Please try again.",
+        description:
+          "Failed to upload image to Google Drive. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -246,7 +263,10 @@ export function TransactionForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-5"
+          >
             {/* Only expense transactions allowed. No type/tabs. */}
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -282,7 +302,9 @@ export function TransactionForm({
                         value={field.value || ""}
                         onChange={(e) =>
                           field.onChange(
-                            e.target.value ? parseFloat(e.target.value) : undefined
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined,
                           )
                         }
                         className="font-mono"
@@ -305,9 +327,17 @@ export function TransactionForm({
                     <div className="flex gap-2 mb-2">
                       <Button
                         type="button"
-                        variant={field.value === "Transportation" ? "default" : "outline"}
+                        variant={
+                          field.value === "Transportation"
+                            ? "default"
+                            : "outline"
+                        }
                         size="icon"
-                        className={field.value === "Transportation" ? "bg-blue-100 text-blue-700 border-blue-200" : ""}
+                        className={
+                          field.value === "Transportation"
+                            ? "bg-blue-100 text-blue-700 border-blue-200"
+                            : ""
+                        }
                         onClick={() => field.onChange("Transportation")}
                         title="Transportation"
                         aria-label="Transportation"
@@ -316,9 +346,17 @@ export function TransactionForm({
                       </Button>
                       <Button
                         type="button"
-                        variant={field.value === "Bills & Utilities" ? "default" : "outline"}
+                        variant={
+                          field.value === "Bills & Utilities"
+                            ? "default"
+                            : "outline"
+                        }
                         size="icon"
-                        className={field.value === "Bills & Utilities" ? "bg-slate-100 text-slate-700 border-slate-200" : ""}
+                        className={
+                          field.value === "Bills & Utilities"
+                            ? "bg-slate-100 text-slate-700 border-slate-200"
+                            : ""
+                        }
                         onClick={() => field.onChange("Bills & Utilities")}
                         title="Bills & Utilities"
                         aria-label="Bills & Utilities"
@@ -327,9 +365,17 @@ export function TransactionForm({
                       </Button>
                       <Button
                         type="button"
-                        variant={field.value === "Food & Dining" ? "default" : "outline"}
+                        variant={
+                          field.value === "Food & Dining"
+                            ? "default"
+                            : "outline"
+                        }
                         size="icon"
-                        className={field.value === "Food & Dining" ? "bg-orange-100 text-orange-700 border-orange-200" : ""}
+                        className={
+                          field.value === "Food & Dining"
+                            ? "bg-orange-100 text-orange-700 border-orange-200"
+                            : ""
+                        }
                         onClick={() => field.onChange("Food & Dining")}
                         title="Food & Dining"
                         aria-label="Food & Dining"
@@ -423,25 +469,33 @@ export function TransactionForm({
                           variant="ghost"
                           onClick={async () => {
                             // If editing and there's an existing Drive image, delete it
-                            if (isEditing && transaction?.image && !selectedFile) {
+                            if (
+                              isEditing &&
+                              transaction?.image &&
+                              !selectedFile
+                            ) {
                               try {
                                 await deleteImageFromDrive(transaction.image);
                                 toast({
                                   title: "Image removed",
-                                  description: "The image has been deleted from Google Drive.",
+                                  description:
+                                    "The image has been deleted from Google Drive.",
                                 });
                               } catch (error) {
-                                console.error('Failed to delete image:', error);
+                                console.error("Failed to delete image:", error);
                                 toast({
                                   title: "Warning",
-                                  description: "Failed to delete image from Drive, but it will be removed from the transaction.",
+                                  description:
+                                    "Failed to delete image from Drive, but it will be removed from the transaction.",
                                   variant: "destructive",
                                 });
                               }
                             }
                             setImagePreview(null);
                             setSelectedFile(null);
-                            form.setValue("image", undefined, { shouldValidate: true });
+                            form.setValue("image", undefined, {
+                              shouldValidate: true,
+                            });
                           }}
                           className="w-fit text-xs text-muted-foreground"
                         >
@@ -465,7 +519,11 @@ export function TransactionForm({
                 Cancel
               </Button>
               <Button type="submit" disabled={isUploading}>
-                {isUploading ? "Uploading..." : isEditing ? "Save Changes" : "Add Expense"}
+                {isUploading
+                  ? "Uploading..."
+                  : isEditing
+                    ? "Save Changes"
+                    : "Add Expense"}
               </Button>
             </div>
           </form>

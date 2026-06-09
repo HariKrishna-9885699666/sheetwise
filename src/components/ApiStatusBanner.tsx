@@ -1,7 +1,15 @@
 import { AlertCircle, CheckCircle2, LogIn, LogOut } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { isApiConfigured, isSignedIn, signIn, signOut, getUserEmail, initializeGapi, initializeGis } from "@/lib/google-sheets";
+import {
+  isApiConfigured,
+  isSignedIn,
+  signIn,
+  signOut,
+  getUserEmail,
+  initializeGapi,
+  initializeGis,
+} from "@/lib/google-sheets";
 import { useState, useEffect } from "react";
 
 export function ApiStatusBanner() {
@@ -20,7 +28,7 @@ export function ApiStatusBanner() {
       try {
         await initializeGapi();
         initializeGis();
-        
+
         // Check if already signed in
         setTimeout(() => {
           const signedIn = isSignedIn();
@@ -31,7 +39,7 @@ export function ApiStatusBanner() {
           setLoading(false);
         }, 300);
       } catch (error) {
-        console.error('Initialization failed:', error);
+        console.error("Initialization failed:", error);
         setLoading(false);
       }
     };
@@ -41,14 +49,14 @@ export function ApiStatusBanner() {
 
   const handleSignIn = async () => {
     if (signingIn) return;
-    
+
     setSigningIn(true);
     try {
       await signIn();
       // Token is now set, reload to fetch data
       window.location.reload();
     } catch (error) {
-      console.error('Sign in failed:', error);
+      console.error("Sign in failed:", error);
       setSigningIn(false);
     }
   };
@@ -72,7 +80,8 @@ export function ApiStatusBanner() {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Google Sheets Not Configured</AlertTitle>
         <AlertDescription>
-          Please configure your Google OAuth Client ID and Spreadsheet ID in the <code className="bg-muted px-1 py-0.5 rounded">.env</code> file.
+          Please configure your Google OAuth Client ID and Spreadsheet ID in the{" "}
+          <code className="bg-muted px-1 py-0.5 rounded">.env</code> file.
         </AlertDescription>
       </Alert>
     );
@@ -85,10 +94,17 @@ export function ApiStatusBanner() {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Sign in Required</AlertTitle>
         <AlertDescription className="flex items-center justify-between">
-          <span>Sign in with your Google account to access your private spreadsheet.</span>
-          <Button onClick={handleSignIn} size="sm" className="ml-4" disabled={signingIn}>
+          <span>
+            Sign in with your Google account to access your private spreadsheet.
+          </span>
+          <Button
+            onClick={handleSignIn}
+            size="sm"
+            className="ml-4"
+            disabled={signingIn}
+          >
             <LogIn className="mr-2 h-4 w-4" />
-            {signingIn ? 'Signing in...' : 'Sign In with Google'}
+            {signingIn ? "Signing in..." : "Sign In with Google"}
           </Button>
         </AlertDescription>
       </Alert>
@@ -99,12 +115,19 @@ export function ApiStatusBanner() {
   return (
     <Alert className="mb-4 border-green-200 bg-green-50">
       <CheckCircle2 className="h-4 w-4 text-green-600" />
-      <AlertTitle className="text-green-900">Connected to Google Sheets</AlertTitle>
+      <AlertTitle className="text-green-900">
+        Connected to Google Sheets
+      </AlertTitle>
       <AlertDescription className="flex items-center justify-between">
         <span className="text-green-800">
-          Signed in as <strong>{userEmail || 'User'}</strong>
+          Signed in as <strong>{userEmail || "User"}</strong>
         </span>
-        <Button onClick={handleSignOut} variant="outline" size="sm" className="ml-4">
+        <Button
+          onClick={handleSignOut}
+          variant="outline"
+          size="sm"
+          className="ml-4"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out
         </Button>
@@ -128,7 +151,7 @@ export function ApiStatusIndicator() {
       try {
         await initializeGapi();
         initializeGis();
-        
+
         // Check if already signed in
         setTimeout(() => {
           const signedIn = isSignedIn();
@@ -139,7 +162,7 @@ export function ApiStatusIndicator() {
           setLoading(false);
         }, 300);
       } catch (error) {
-        console.error('Initialization failed:', error);
+        console.error("Initialization failed:", error);
         setLoading(false);
       }
     };
@@ -184,7 +207,7 @@ export function ApiStatusIndicator() {
     <div className="flex items-center gap-3 text-sm">
       <div className="flex items-center gap-2 text-green-600">
         <CheckCircle2 className="h-4 w-4" />
-        <span>{userEmail || 'Connected'}</span>
+        <span>{userEmail || "Connected"}</span>
       </div>
       <Button onClick={handleSignOut} variant="ghost" size="sm">
         <LogOut className="h-4 w-4" />
@@ -192,4 +215,3 @@ export function ApiStatusIndicator() {
     </div>
   );
 }
-

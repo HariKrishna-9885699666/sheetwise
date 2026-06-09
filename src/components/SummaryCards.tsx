@@ -48,14 +48,21 @@ export function SummaryCards({
               <p
                 className={cn(
                   "mt-1 sm:mt-2 text-base sm:text-2xl font-semibold tracking-tight",
-                  card.colorClass
+                  card.colorClass,
                 )}
               >
                 {card.format(card.value)}
               </p>
             </div>
-            <div className={cn("rounded-lg p-1.5 sm:p-2.5 ml-1 sm:ml-0", card.bgClass)}>
-              <card.icon className={cn("h-3 w-3 sm:h-5 sm:w-5", card.colorClass)} />
+            <div
+              className={cn(
+                "rounded-lg p-1.5 sm:p-2.5 ml-1 sm:ml-0",
+                card.bgClass,
+              )}
+            >
+              <card.icon
+                className={cn("h-3 w-3 sm:h-5 sm:w-5", card.colorClass)}
+              />
             </div>
           </div>
         </div>

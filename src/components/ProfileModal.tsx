@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { User, ChevronRight, Github, Linkedin, FileText, Phone, Mail, MapPin, GraduationCap, Globe } from "lucide-react";
+import {
+  User,
+  ChevronRight,
+  Github,
+  Linkedin,
+  FileText,
+  Phone,
+  Mail,
+  MapPin,
+  GraduationCap,
+  Globe,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +39,7 @@ export function ProfileModal() {
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">My Profile</DialogTitle>
           </DialogHeader>
-          
+
           <div className="grid gap-6 py-4">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Left Column */}
@@ -37,23 +48,29 @@ export function ProfileModal() {
                   <ChevronRight className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">Name:</strong>
-                    <span className="ml-2 text-muted-foreground">Hari Krishna Anem</span>
+                    <span className="ml-2 text-muted-foreground">
+                      Hari Krishna Anem
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">Phone:</strong>
-                    <span className="ml-2 text-muted-foreground">+91 9885699666</span>
+                    <span className="ml-2 text-muted-foreground">
+                      +91 9885699666
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">City:</strong>
-                    <span className="ml-2 text-muted-foreground">Hyderabad, India</span>
+                    <span className="ml-2 text-muted-foreground">
+                      Hyderabad, India
+                    </span>
                   </div>
                 </div>
               </div>
@@ -64,25 +81,29 @@ export function ProfileModal() {
                   <Mail className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">Email:</strong>
-                    <span className="ml-2 text-muted-foreground">anemharikrishna@gmail.com</span>
+                    <span className="ml-2 text-muted-foreground">
+                      anemharikrishna@gmail.com
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <GraduationCap className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">Degree:</strong>
-                    <span className="ml-2 text-muted-foreground">B.Tech (CSIT)</span>
+                    <span className="ml-2 text-muted-foreground">
+                      B.Tech (CSIT)
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <Github className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">GitHub:</strong>
-                    <a 
-                      href="https://github.com/HariKrishna-9885699666/" 
-                      target="_blank" 
+                    <a
+                      href="https://github.com/HariKrishna-9885699666/"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 text-primary hover:underline"
                     >
@@ -90,14 +111,14 @@ export function ProfileModal() {
                     </a>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <Linkedin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">LinkedIn:</strong>
-                    <a 
-                      href="https://www.linkedin.com/in/anemharikrishna" 
-                      target="_blank" 
+                    <a
+                      href="https://www.linkedin.com/in/anemharikrishna"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 text-primary hover:underline"
                     >
@@ -105,14 +126,14 @@ export function ProfileModal() {
                     </a>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">Blog:</strong>
-                    <a 
-                      href="https://harikrishna.hashnode.dev/" 
-                      target="_blank" 
+                    <a
+                      href="https://harikrishna.hashnode.dev/"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 text-primary hover:underline"
                     >
@@ -120,14 +141,14 @@ export function ProfileModal() {
                     </a>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-3">
                   <Globe className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
                     <strong className="font-semibold">Portfolio:</strong>
-                    <a 
-                      href="https://harikrishna.netlify.app" 
-                      target="_blank" 
+                    <a
+                      href="https://harikrishna.netlify.app"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="ml-2 text-primary hover:underline"
                     >

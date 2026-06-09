@@ -2,6 +2,8 @@
 /// <reference types="gapi" />
 /// <reference types="gapi.auth2" />
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare namespace google {
   namespace accounts {
     namespace oauth2 {
@@ -60,7 +62,9 @@ declare namespace gapi {
         }
 
         function get(options: GetOptions): Promise<{ result: any }>;
-        function batchUpdate(options: BatchUpdateOptions): Promise<{ result: any }>;
+        function batchUpdate(
+          options: BatchUpdateOptions,
+        ): Promise<{ result: any }>;
 
         namespace values {
           interface GetOptions {

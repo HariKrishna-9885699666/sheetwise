@@ -31,16 +31,14 @@ export function MonthSwitcher({
   isConnected = true,
 }: MonthSwitcherProps) {
   const { toast } = useToast();
-  
+
   // Filter out invalid month tabs and sort in descending order
-  const validMonthTabs = monthTabs
-    .filter(isValidMonthTab)
-    .sort((a, b) => {
-      const dateA = parseMonthTabName(a);
-      const dateB = parseMonthTabName(b);
-      return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
-    });
-  
+  const validMonthTabs = monthTabs.filter(isValidMonthTab).sort((a, b) => {
+    const dateA = parseMonthTabName(a);
+    const dateB = parseMonthTabName(b);
+    return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+  });
+
   const currentDate = parseMonthTabName(currentMonth);
   const displayName = getMonthDisplayName(currentDate);
   const isCurrentMonth = currentMonth === getCurrentMonthTab();
@@ -49,9 +47,12 @@ export function MonthSwitcher({
   const currentYear = currentDate.getFullYear();
   const startYear = 2023;
   const endYear = new Date().getFullYear() + 1;
-  const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => endYear - i);
+  const years = Array.from(
+    { length: endYear - startYear + 1 },
+    (_, i) => endYear - i,
+  );
   const currentMonthNum = currentDate.getMonth();
-  
+
   const months = [
     { value: 0, label: "January" },
     { value: 1, label: "February" },
@@ -71,7 +72,8 @@ export function MonthSwitcher({
     if (!isConnected) {
       toast({
         title: "Connect to Google Sheets",
-        description: "Please connect to Google Sheets to change months and view your transactions.",
+        description:
+          "Please connect to Google Sheets to change months and view your transactions.",
         variant: "destructive",
       });
       return;
@@ -85,7 +87,8 @@ export function MonthSwitcher({
     if (!isConnected) {
       toast({
         title: "Connect to Google Sheets",
-        description: "Please connect to Google Sheets to change months and view your transactions.",
+        description:
+          "Please connect to Google Sheets to change months and view your transactions.",
         variant: "destructive",
       });
       return;
@@ -99,7 +102,8 @@ export function MonthSwitcher({
     if (!isConnected) {
       toast({
         title: "Connect to Google Sheets",
-        description: "Please connect to Google Sheets to change months and view your transactions.",
+        description:
+          "Please connect to Google Sheets to change months and view your transactions.",
         variant: "destructive",
       });
       return;
@@ -111,7 +115,8 @@ export function MonthSwitcher({
     if (!isConnected) {
       toast({
         title: "Connect to Google Sheets",
-        description: "Please connect to Google Sheets to change months and view your transactions.",
+        description:
+          "Please connect to Google Sheets to change months and view your transactions.",
         variant: "destructive",
       });
       return;
@@ -123,7 +128,8 @@ export function MonthSwitcher({
     if (!isConnected) {
       toast({
         title: "Connect to Google Sheets",
-        description: "Please connect to Google Sheets to change months and view your transactions.",
+        description:
+          "Please connect to Google Sheets to change months and view your transactions.",
         variant: "destructive",
       });
       return;
@@ -144,12 +150,15 @@ export function MonthSwitcher({
         </Button>
 
         <div className="flex items-center gap-0.5 md:gap-1 px-1 md:px-2 flex-1 md:flex-initial justify-center">
-          <Select value={currentMonthNum.toString()} onValueChange={handleMonthChange}>
+          <Select
+            value={currentMonthNum.toString()}
+            onValueChange={handleMonthChange}
+          >
             <SelectTrigger className="h-7 md:h-8 w-auto md:w-[120px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0 min-w-[90px]">
               <SelectValue>{months[currentMonthNum].label}</SelectValue>
             </SelectTrigger>
-            <SelectContent 
-              className="bg-popover !min-w-0 !w-[calc(100vw-2rem)] sm:!w-[var(--radix-select-trigger-width)]" 
+            <SelectContent
+              className="bg-popover !min-w-0 !w-[calc(100vw-2rem)] sm:!w-[var(--radix-select-trigger-width)]"
               position="popper"
               align="center"
             >
@@ -161,12 +170,15 @@ export function MonthSwitcher({
             </SelectContent>
           </Select>
 
-          <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+          <Select
+            value={currentYear.toString()}
+            onValueChange={handleYearChange}
+          >
             <SelectTrigger className="h-7 md:h-8 w-auto md:w-[80px] border-0 bg-transparent text-xs md:text-sm font-medium shadow-none focus:ring-0 min-w-[60px]">
               <SelectValue>{currentYear}</SelectValue>
             </SelectTrigger>
-            <SelectContent 
-              className="bg-popover !min-w-0 !w-[calc(100vw-2rem)] sm:!w-[var(--radix-select-trigger-width)]" 
+            <SelectContent
+              className="bg-popover !min-w-0 !w-[calc(100vw-2rem)] sm:!w-[var(--radix-select-trigger-width)]"
               position="popper"
               align="center"
             >

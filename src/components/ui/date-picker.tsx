@@ -13,7 +13,11 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Drawer,
   DrawerContent,
@@ -68,7 +72,7 @@ function CalendarPanel({ value, onChange, onClose }: CalendarPanelProps) {
                 "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
                 active
                   ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border bg-muted/40 text-foreground hover:bg-muted"
+                  : "border-border bg-muted/40 text-foreground hover:bg-muted",
               )}
             >
               {q.label}
@@ -168,7 +172,7 @@ function CalendarPanel({ value, onChange, onClose }: CalendarPanelProps) {
                 !isSelected &&
                   isTodayDate &&
                   "border-2 border-primary text-primary font-semibold",
-                !isSelected && !isTodayDate && "hover:bg-accent"
+                !isSelected && !isTodayDate && "hover:bg-accent",
               )}
             >
               {format(day, "d")}
@@ -199,7 +203,9 @@ export function DatePicker({
   const triggerContent = (
     <>
       <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className={cn("flex-1 text-left", !value && "text-muted-foreground")}>
+      <span
+        className={cn("flex-1 text-left", !value && "text-muted-foreground")}
+      >
         {value ? format(value, "EEE, dd MMM yyyy") : placeholder}
       </span>
     </>
@@ -221,7 +227,7 @@ export function DatePicker({
           onClick={() => setOpen(true)}
           className={cn(
             "flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors hover:bg-accent/50",
-            className
+            className,
           )}
         >
           {triggerContent}
@@ -243,7 +249,7 @@ export function DatePicker({
           type="button"
           className={cn(
             "flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors hover:bg-accent/50",
-            className
+            className,
           )}
         >
           {triggerContent}

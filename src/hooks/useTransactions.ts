@@ -4,7 +4,12 @@ import { getMonthTabName, getCurrentMonthTab } from "@/lib/date-utils";
 import * as sheetsApi from "@/lib/google-sheets";
 import { deleteImageFromDrive } from "@/lib/google-drive";
 import { toast } from "sonner";
-import { saveCacheData, getCacheData, deleteCacheEntry, CACHE_KEYS } from "@/lib/indexeddb";
+import {
+  saveCacheData,
+  getCacheData,
+  deleteCacheEntry,
+  CACHE_KEYS,
+} from "@/lib/indexeddb";
 
 // Generate a simple unique ID
 function generateId(): string {
@@ -15,9 +20,8 @@ function generateId(): string {
 const generateDemoData = (): Record<string, Transaction[]> => {
   const currentMonth = getCurrentMonthTab();
   const now = new Date();
-  
-  const demoTransactions: Transaction[] = [
 
+  const demoTransactions: Transaction[] = [
     {
       id: generateId(),
       date: new Date(now.getFullYear(), now.getMonth(), 3).toISOString(),
@@ -87,8 +91,10 @@ function sheetRowToTransaction(row: sheetsApi.SheetRow): Transaction {
 }
 
 export function useTransactions() {
-  const [transactions, setTransactions] = useState<Record<string, Transaction[]>>(generateDemoData);
-  const [currentMonth, setCurrentMonth] = useState<string>(getCurrentMonthTab());
+  const [transactions, setTransactions] =
+    useState<Record<string, Transaction[]>>(generateDemoData);
+  const [currentMonth, setCurrentMonth] =
+    useState<string>(getCurrentMonthTab());
   const [isLoading, setIsLoading] = useState(false);
   const [useLocalData, setUseLocalData] = useState(true); // Fallback to local when API not configured
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -121,8 +127,11 @@ export function useTransactions() {
       }
       setUseLocalData(false);
       return true;
-    } catch (error: any) {
-      if (error?.message && !error.message.includes("Not authenticated")) {
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        !error.message.includes("Not authenticated")
+      ) {
         toast.error("Failed to load data from Google Sheets");
       }
       setUseLocalData(true);
@@ -158,7 +167,7 @@ export function useTransactions() {
           setUserEmail(email);
         }
       } catch (error) {
-        console.error('Failed to initialize Google API:', error);
+        console.error("Failed to initialize Google API:", error);
         setUseLocalData(true);
       } finally {
         setIsAuthLoading(false);
@@ -173,7 +182,7 @@ export function useTransactions() {
   useEffect(() => {
     if (!gapiReady) return;
     void loadMonthData(currentMonth);
-  }, [currentMonth, gapiReady]);
+  }, [currentMonth, gapiReady, loadMonthData]);
 
   // Load available month tabs
   useEffect(() => {
@@ -184,15 +193,16 @@ export function useTransactions() {
         const tabs = await sheetsApi.getSheetTabs();
         // Initialize empty arrays for each tab
         const tabData: Record<string, Transaction[]> = {};
-        tabs.forEach(tab => {
+        tabs.forEach((tab) => {
           if (!transactions[tab]) {
             tabData[tab] = [];
           }
         });
         if (Object.keys(tabData).length > 0) {
-          setTransactions(prev => ({ ...prev, ...tabData }));
+          setTransactions((prev) => ({ ...prev, ...tabData }));
         }
-      } catch (error) {
+      } catch (_error) {
+        // Silently handle — tabs data is non-critical
       }
     };
 
@@ -210,7 +220,7 @@ export function useTransactions() {
   const summary = useMemo(() => {
     const expense = currentMonthTransactions.reduce(
       (sum, t) => sum + (t.expense || 0),
-      0
+      0,
     );
     return {
       expense,
@@ -219,9 +229,11 @@ export function useTransactions() {
   }, [currentMonthTransactions]);
 
   const addTransaction = useCallback(
-    async (data: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deleted">) => {
+    async (
+      data: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deleted">,
+    ) => {
       const monthTab = getMonthTabName(new Date(data.date));
-      
+
       if (!useLocalData) {
         try {
           setIsMutating(true);
@@ -233,16 +245,16 @@ export function useTransactions() {
             notes: data.notes || "",
             image: data.image || "",
           });
-          
+
           const newTransaction = sheetRowToTransaction(sheetRow);
           setTransactions((prev) => ({
             ...prev,
             [monthTab]: [...(prev[monthTab] || []), newTransaction],
           }));
-          
+
           // Invalidate cache
           await deleteCacheEntry(CACHE_KEYS.ALL_MONTHS);
-          
+
           return newTransaction;
         } catch (error) {
           toast.error("Failed to save to Google Sheets");
@@ -251,7 +263,7 @@ export function useTransactions() {
           setIsMutating(false);
         }
       }
-      
+
       // Fallback to local storage
       const newTransaction: Transaction = {
         ...data,
@@ -268,7 +280,7 @@ export function useTransactions() {
 
       return newTransaction;
     },
-    [useLocalData]
+    [useLocalData],
   );
 
   const updateTransaction = useCallback(
@@ -300,7 +312,7 @@ export function useTransactions() {
         try {
           setIsMutating(true);
           const updatedTransaction = { ...existingTransaction, ...updatedData };
-          
+
           if (newMonth !== oldMonth) {
             // Delete from old month, add to new month
             await sheetsApi.deleteRowById(oldMonth, id);
@@ -338,8 +350,14 @@ export function useTransactions() {
         setTransactions((prev) => {
           const updated = { ...prev };
           updated[oldMonth!] = updated[oldMonth!].filter((t) => t.id !== id);
-          const updatedTransaction = { ...existingTransaction!, ...updatedData };
-          updated[newMonth] = [...(updated[newMonth] || []), updatedTransaction];
+          const updatedTransaction = {
+            ...existingTransaction!,
+            ...updatedData,
+          };
+          updated[newMonth] = [
+            ...(updated[newMonth] || []),
+            updatedTransaction,
+          ];
           return updated;
         });
       } else {
@@ -347,17 +365,17 @@ export function useTransactions() {
         setTransactions((prev) => ({
           ...prev,
           [oldMonth!]: prev[oldMonth!].map((t) =>
-            t.id === id ? { ...t, ...updatedData } : t
+            t.id === id ? { ...t, ...updatedData } : t,
           ),
         }));
       }
-      
+
       // Invalidate cache after update
       if (!useLocalData) {
         await deleteCacheEntry(CACHE_KEYS.ALL_MONTHS);
       }
     },
-    [transactions, useLocalData]
+    [transactions, useLocalData],
   );
 
   const deleteTransaction = useCallback(
@@ -378,7 +396,7 @@ export function useTransactions() {
         try {
           await deleteImageFromDrive(targetTransaction.image);
         } catch (error) {
-          console.warn('Failed to delete image from Drive:', error);
+          console.warn("Failed to delete image from Drive:", error);
           // Continue with transaction deletion even if image deletion fails
         }
       }
@@ -404,11 +422,11 @@ export function useTransactions() {
         });
         return updated;
       });
-      
+
       // Invalidate cache
       await deleteCacheEntry(CACHE_KEYS.ALL_MONTHS);
     },
-    [transactions, useLocalData]
+    [transactions, useLocalData],
   );
 
   const loadAllMonths = useCallback(
@@ -422,13 +440,13 @@ export function useTransactions() {
         if (!forceRefresh) {
           const cachedData = await getCacheData(CACHE_KEYS.ALL_MONTHS);
           if (cachedData) {
-            console.log('Using cached data from IndexedDB');
-            setTransactions(prev => ({ ...prev, ...cachedData }));
+            console.log("Using cached data from IndexedDB");
+            setTransactions((prev) => ({ ...prev, ...cachedData }));
             return;
           }
         }
 
-        console.log('Fetching fresh data from Google Sheets');
+        console.log("Fetching fresh data from Google Sheets");
         const tabs = await sheetsApi.getSheetTabs();
         const allData: Record<string, Transaction[]> = {};
 
@@ -442,17 +460,17 @@ export function useTransactions() {
               console.error(`Failed to load data for ${tab}:`, error);
               allData[tab] = [];
             }
-          })
+          }),
         );
 
         // Save to IndexedDB cache
         await saveCacheData(CACHE_KEYS.ALL_MONTHS, allData);
-        setTransactions(prev => ({ ...prev, ...allData }));
+        setTransactions((prev) => ({ ...prev, ...allData }));
       } catch (error) {
         console.error("Failed to load all months:", error);
       }
     },
-    [gapiReady]
+    [gapiReady],
   );
 
   const handleSignIn = useCallback(async () => {
@@ -461,7 +479,7 @@ export function useTransactions() {
       await sheetsApi.signIn();
       const email = await sheetsApi.getUserEmail();
       setUserEmail(email);
-      setGapiReady(true);   // must be true before loadMonthData checks it
+      setGapiReady(true); // must be true before loadMonthData checks it
       setUseLocalData(false);
 
       const month = getCurrentMonthTab();
@@ -494,7 +512,8 @@ export function useTransactions() {
     deleteTransaction,
     loadAllMonths,
     handleSignIn,
-    isConnected: sheetsApi.isApiConfigured && sheetsApi.isSignedIn() && !useLocalData,
+    isConnected:
+      sheetsApi.isApiConfigured && sheetsApi.isSignedIn() && !useLocalData,
     userEmail,
   };
 }

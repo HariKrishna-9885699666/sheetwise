@@ -35,7 +35,9 @@ import { Transaction } from "@/types/transaction";
 interface BulkExpenseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (expenses: Omit<Transaction, "id" | "createdAt" | "updatedAt">[]) => Promise<void>;
+  onSave: (
+    expenses: Omit<Transaction, "id" | "createdAt" | "updatedAt">[],
+  ) => Promise<void>;
   currentMonth: string;
 }
 
@@ -47,7 +49,10 @@ interface BulkExpenseRow {
   notes: string;
 }
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   "Food & Dining": UtensilsCrossed,
   Transportation: Car,
   Shopping: ShoppingBag,
@@ -119,7 +124,11 @@ export function BulkExpenseForm({
     }
   };
 
-  const updateRow = (index: number, field: keyof BulkExpenseRow, value: string) => {
+  const updateRow = (
+    index: number,
+    field: keyof BulkExpenseRow,
+    value: string,
+  ) => {
     const newRows = [...rows];
     newRows[index] = { ...newRows[index], [field]: value };
     setRows(newRows);
@@ -128,13 +137,15 @@ export function BulkExpenseForm({
   const handleSave = async () => {
     // Validate all rows
     const validRows = rows.filter(
-      (row) => row.date && row.expense && parseFloat(row.expense) > 0 && row.category
+      (row) =>
+        row.date && row.expense && parseFloat(row.expense) > 0 && row.category,
     );
 
     if (validRows.length === 0) {
       toast({
         title: "Validation Error",
-        description: "Please fill in Date, Amount, and Category for at least one expense.",
+        description:
+          "Please fill in Date, Amount, and Category for at least one expense.",
         variant: "destructive",
       });
       return;
@@ -162,7 +173,7 @@ export function BulkExpenseForm({
       }));
 
       await onSave(expenses);
-      
+
       // Close the dialog (useEffect will reset the form)
       onOpenChange(false);
     } catch (error) {
@@ -203,7 +214,12 @@ export function BulkExpenseForm({
 
                 {/* Date */}
                 <div className="col-span-1 md:col-span-3">
-                  <Label htmlFor={`date-${index}`} className="text-xs md:text-sm">Date</Label>
+                  <Label
+                    htmlFor={`date-${index}`}
+                    className="text-xs md:text-sm"
+                  >
+                    Date
+                  </Label>
                   <Input
                     id={`date-${index}`}
                     type="date"
@@ -216,14 +232,21 @@ export function BulkExpenseForm({
 
                 {/* Amount */}
                 <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor={`expense-${index}`} className="text-xs md:text-sm">Amount</Label>
+                  <Label
+                    htmlFor={`expense-${index}`}
+                    className="text-xs md:text-sm"
+                  >
+                    Amount
+                  </Label>
                   <Input
                     id={`expense-${index}`}
                     type="number"
                     step="0.01"
                     placeholder="0"
                     value={row.expense}
-                    onChange={(e) => updateRow(index, "expense", e.target.value)}
+                    onChange={(e) =>
+                      updateRow(index, "expense", e.target.value)
+                    }
                     className="text-xs md:text-sm h-8 md:h-10"
                     required
                   />
@@ -231,48 +254,59 @@ export function BulkExpenseForm({
 
                 {/* Category */}
                 <div className="col-span-1 md:col-span-3">
-                  <Label htmlFor={`category-${index}`} className="text-xs md:text-sm">Category</Label>
-                  
+                  <Label
+                    htmlFor={`category-${index}`}
+                    className="text-xs md:text-sm"
+                  >
+                    Category
+                  </Label>
+
                   {/* Mobile: Quick icon buttons */}
                   <div className="flex gap-1 md:hidden">
                     <button
                       type="button"
-                      onClick={() => updateRow(index, "category", "Transportation")}
+                      onClick={() =>
+                        updateRow(index, "category", "Transportation")
+                      }
                       className={cn(
                         "flex-1 h-8 flex items-center justify-center rounded-md border transition-colors",
-                        row.category === "Transportation" 
-                          ? "bg-primary text-primary-foreground border-primary" 
-                          : "bg-background hover:bg-accent"
+                        row.category === "Transportation"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-accent",
                       )}
                     >
                       <Car className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => updateRow(index, "category", "Food & Dining")}
+                      onClick={() =>
+                        updateRow(index, "category", "Food & Dining")
+                      }
                       className={cn(
                         "flex-1 h-8 flex items-center justify-center rounded-md border transition-colors",
-                        row.category === "Food & Dining" 
-                          ? "bg-primary text-primary-foreground border-primary" 
-                          : "bg-background hover:bg-accent"
+                        row.category === "Food & Dining"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-accent",
                       )}
                     >
                       <UtensilsCrossed className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => updateRow(index, "category", "Bills & EMI")}
+                      onClick={() =>
+                        updateRow(index, "category", "Bills & EMI")
+                      }
                       className={cn(
                         "flex-1 h-8 flex items-center justify-center rounded-md border transition-colors",
-                        row.category === "Bills & EMI" 
-                          ? "bg-primary text-primary-foreground border-primary" 
-                          : "bg-background hover:bg-accent"
+                        row.category === "Bills & EMI"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-accent",
                       )}
                     >
                       <Zap className="h-4 w-4" />
                     </button>
                   </div>
-                  
+
                   {/* Desktop: Full dropdown */}
                   <div className="hidden md:block [&_button]:h-10 [&_button]:text-sm">
                     <SearchSelect
@@ -287,7 +321,12 @@ export function BulkExpenseForm({
 
                 {/* Account - Hidden on mobile, visible on desktop */}
                 <div className="hidden md:block md:col-span-2">
-                  <Label htmlFor={`account-${index}`} className="text-xs md:text-sm">Account</Label>
+                  <Label
+                    htmlFor={`account-${index}`}
+                    className="text-xs md:text-sm"
+                  >
+                    Account
+                  </Label>
                   <SearchSelect
                     options={accounts}
                     value={row.account}
@@ -298,7 +337,12 @@ export function BulkExpenseForm({
 
                 {/* Notes */}
                 <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor={`notes-${index}`} className="text-xs md:text-sm">Notes</Label>
+                  <Label
+                    htmlFor={`notes-${index}`}
+                    className="text-xs md:text-sm"
+                  >
+                    Notes
+                  </Label>
                   <Input
                     id={`notes-${index}`}
                     placeholder="Optional"
@@ -324,12 +368,18 @@ export function BulkExpenseForm({
         </div>
 
         <DialogFooter className="mt-4 flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="flex-1"
+          >
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={isSaving} className="flex-1">
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : `Save All (${rows.filter(r => r.date && r.expense && r.category).length})`}
+            {isSaving
+              ? "Saving..."
+              : `Save All (${rows.filter((r) => r.date && r.expense && r.category).length})`}
           </Button>
         </DialogFooter>
       </DialogContent>

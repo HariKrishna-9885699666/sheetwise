@@ -11,15 +11,28 @@ import { ProfileModal } from "@/components/ProfileModal";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import * as sheetsApi from "@/lib/google-sheets";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 import { CATEGORIES } from "@/types/transaction";
-import { 
-  XCircle, 
-  Wallet, 
-  Plus, 
+import {
+  XCircle,
+  Wallet,
+  Plus,
   ChevronDown,
   UtensilsCrossed,
   Car,
@@ -50,7 +63,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Loader2 } from "lucide-react";
 
-const categoryIcons: Record<string, any> = {
+const categoryIcons: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
   "Food & Dining": UtensilsCrossed,
   Transportation: Car,
   Shopping: ShoppingBag,
@@ -92,7 +108,7 @@ const Index = () => {
     useState<Transaction | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(
-    null
+    null,
   );
 
   // Search, filter, sort state
@@ -112,23 +128,36 @@ const Index = () => {
     let filtered = transactions;
     if (search.trim()) {
       const s = search.trim().toLowerCase();
-      filtered = filtered.filter(t =>
-        t.notes.toLowerCase().includes(s) ||
-        t.category.toLowerCase().includes(s) ||
-        t.account.toLowerCase().includes(s)
+      filtered = filtered.filter(
+        (t) =>
+          t.notes.toLowerCase().includes(s) ||
+          t.category.toLowerCase().includes(s) ||
+          t.account.toLowerCase().includes(s),
       );
     }
     if (category && category !== "all") {
-      filtered = filtered.filter(t => t.category === category);
+      filtered = filtered.filter((t) => t.category === category);
     }
     if (sort === "date-desc") {
-      filtered = filtered.slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      filtered = filtered
+        .slice()
+        .sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
     } else if (sort === "date-asc") {
-      filtered = filtered.slice().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      filtered = filtered
+        .slice()
+        .sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+        );
     } else if (sort === "amount-desc") {
-      filtered = filtered.slice().sort((a, b) => (b.expense || 0) - (a.expense || 0));
+      filtered = filtered
+        .slice()
+        .sort((a, b) => (b.expense || 0) - (a.expense || 0));
     } else if (sort === "amount-asc") {
-      filtered = filtered.slice().sort((a, b) => (a.expense || 0) - (b.expense || 0));
+      filtered = filtered
+        .slice()
+        .sort((a, b) => (a.expense || 0) - (b.expense || 0));
     }
     return filtered;
   }, [transactions, search, category, sort]);
@@ -153,7 +182,10 @@ const Index = () => {
     setIsGlobalSearchOpen(true);
   };
 
-  const handleSelectSearchResult = (transaction: Transaction, month: string) => {
+  const handleSelectSearchResult = (
+    transaction: Transaction,
+    month: string,
+  ) => {
     // Switch to the month of the found transaction
     if (month !== currentMonth) {
       setCurrentMonth(month);
@@ -164,7 +196,7 @@ const Index = () => {
   };
 
   const handleBulkExpenseSave = async (
-    expenses: Omit<Transaction, "id" | "createdAt" | "updatedAt">[]
+    expenses: Omit<Transaction, "id" | "createdAt" | "updatedAt">[],
   ) => {
     try {
       for (const expense of expenses) {
@@ -172,7 +204,7 @@ const Index = () => {
       }
       toast({
         title: "✅ Expenses added",
-        description: `Successfully added ${expenses.length} expense${expenses.length > 1 ? 's' : ''}.`,
+        description: `Successfully added ${expenses.length} expense${expenses.length > 1 ? "s" : ""}.`,
       });
     } catch (error) {
       toast({
@@ -206,7 +238,7 @@ const Index = () => {
   };
 
   const handleFormSubmit = (
-    data: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deleted">
+    data: Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deleted">,
   ) => {
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, data);
@@ -256,10 +288,10 @@ const Index = () => {
       <div className="flex h-screen items-center justify-center text-center">
         <div>
           <h1 className="text-2xl font-bold mb-4">Welcome to SheetWise</h1>
-          <p className="mb-6">Connect to Google Sheets to manage your expenses.</p>
-          <Button onClick={handleSignInClick}>
-            Connect to Google Sheets
-          </Button>
+          <p className="mb-6">
+            Connect to Google Sheets to manage your expenses.
+          </p>
+          <Button onClick={handleSignInClick}>Connect to Google Sheets</Button>
         </div>
       </div>
     );
@@ -287,7 +319,7 @@ const Index = () => {
               Expenses for {currentMonth}
             </h1>
           </div>
-          
+
           {/* Mobile: Centered Month Header */}
           <div className="md:hidden flex items-center justify-center">
             <h1 className="text-xl font-semibold text-foreground">
@@ -298,7 +330,10 @@ const Index = () => {
           {isLoading ? (
             <div className="hidden md:grid grid-cols-2 gap-2 sm:gap-4">
               {[1, 2].map((i) => (
-                <div key={i} className="rounded-xl border border-border bg-card p-3 sm:p-6 shadow-card">
+                <div
+                  key={i}
+                  className="rounded-xl border border-border bg-card p-3 sm:p-6 shadow-card"
+                >
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
                       <Skeleton className="h-3 sm:h-4 w-16 sm:w-24" />
@@ -321,18 +356,24 @@ const Index = () => {
 
           <div className="space-y-4">
             {/* Mobile: Collapsible Filters */}
-            <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className="md:hidden">
+            <Collapsible
+              open={filtersOpen}
+              onOpenChange={setFiltersOpen}
+              className="md:hidden"
+            >
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
                   <span>Filters & Sort</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+                  />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="mt-3 space-y-2">
                 <Input
                   placeholder="Search notes, category, account..."
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="w-full"
                 />
                 <Select value={category} onValueChange={setCategory}>
@@ -341,7 +382,7 @@ const Index = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map(cat => {
+                    {CATEGORIES.map((cat) => {
                       const Icon = categoryIcons[cat];
                       return (
                         <SelectItem key={cat} value={cat}>
@@ -382,7 +423,7 @@ const Index = () => {
                 <Input
                   placeholder="Search notes, category, account..."
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="max-w-xs w-full"
                 />
                 <Select value={category} onValueChange={setCategory}>
@@ -391,7 +432,7 @@ const Index = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {CATEGORIES.map(cat => {
+                    {CATEGORIES.map((cat) => {
                       const Icon = categoryIcons[cat];
                       return (
                         <SelectItem key={cat} value={cat}>
@@ -438,28 +479,46 @@ const Index = () => {
                     <Skeleton className="h-8 w-32" />
                   </div>
                 </div>
-                
+
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="w-[100px] font-semibold">Date</TableHead>
+                      <TableHead className="w-[100px] font-semibold">
+                        Date
+                      </TableHead>
                       <TableHead className="font-semibold">Category</TableHead>
                       <TableHead className="font-semibold">Account</TableHead>
                       <TableHead className="font-semibold">Notes</TableHead>
                       <TableHead className="font-semibold">Image</TableHead>
-                      <TableHead className="text-right font-semibold">Expense</TableHead>
-                      <TableHead className="text-center font-semibold w-[100px]">Actions</TableHead>
+                      <TableHead className="text-right font-semibold">
+                        Expense
+                      </TableHead>
+                      <TableHead className="text-center font-semibold w-[100px]">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {[...Array(5)].map((_, i) => (
                       <TableRow key={i} className="border-border">
-                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                        <TableCell className="text-center"><Skeleton className="h-5 w-5 mx-auto" /></TableCell>
-                        <TableCell className="text-right"><Skeleton className="h-4 w-20 ml-auto" /></TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-16" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-6 w-24" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-20" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-4 w-32" />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Skeleton className="h-5 w-5 mx-auto" />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Skeleton className="h-4 w-20 ml-auto" />
+                        </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
                             <Skeleton className="h-8 w-8" />
@@ -470,7 +529,7 @@ const Index = () => {
                     ))}
                   </TableBody>
                 </Table>
-                
+
                 {/* Skeleton Total Expenses Footer */}
                 <div className="border-t-2 border-border bg-muted/60 p-4">
                   <div className="flex items-center justify-between">
@@ -491,7 +550,7 @@ const Index = () => {
       </main>
 
       <TransactionForm
-        key={isFormOpen ? 'form-open' : 'form-closed'}
+        key={isFormOpen ? "form-open" : "form-closed"}
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         transaction={editingTransaction}
@@ -499,7 +558,7 @@ const Index = () => {
       />
 
       <BulkExpenseForm
-        key={isBulkFormOpen ? 'bulk-open' : 'bulk-closed'}
+        key={isBulkFormOpen ? "bulk-open" : "bulk-closed"}
         open={isBulkFormOpen}
         onOpenChange={setIsBulkFormOpen}
         onSave={handleBulkExpenseSave}
@@ -515,9 +574,7 @@ const Index = () => {
       {/* Floating Action Button for Mobile with Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-          >
+          <button className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-primary text-primary-foreground px-6 py-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
             <Plus className="h-6 w-6" />
             <span className="text-lg font-semibold">Add Expense</span>
             <ChevronDown className="h-4 w-4" />

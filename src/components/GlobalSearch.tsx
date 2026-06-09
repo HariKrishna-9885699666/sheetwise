@@ -29,21 +29,24 @@ export function GlobalSearch({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Search across all months
-  const searchResults = Object.entries(allTransactions).flatMap(([month, transactions]) =>
-    transactions
-      .filter((t) => {
-        const query = searchQuery.toLowerCase().trim();
-        if (!query) return false;
-        
-        return (
-          t.category.toLowerCase().includes(query) ||
-          t.notes.toLowerCase().includes(query) ||
-          t.account.toLowerCase().includes(query) ||
-          t.expense?.toString().includes(query) ||
-          format(new Date(t.date), "dd MMM yyyy").toLowerCase().includes(query)
-        );
-      })
-      .map((t) => ({ transaction: t, month }))
+  const searchResults = Object.entries(allTransactions).flatMap(
+    ([month, transactions]) =>
+      transactions
+        .filter((t) => {
+          const query = searchQuery.toLowerCase().trim();
+          if (!query) return false;
+
+          return (
+            t.category.toLowerCase().includes(query) ||
+            t.notes.toLowerCase().includes(query) ||
+            t.account.toLowerCase().includes(query) ||
+            t.expense?.toString().includes(query) ||
+            format(new Date(t.date), "dd MMM yyyy")
+              .toLowerCase()
+              .includes(query)
+          );
+        })
+        .map((t) => ({ transaction: t, month })),
   );
 
   const handleSelectResult = (transaction: Transaction, month: string) => {
@@ -58,7 +61,8 @@ export function GlobalSearch({
         <DialogHeader>
           <DialogTitle>Search All Expenses</DialogTitle>
           <DialogDescription>
-            Search by category, notes, account, amount, or date across all months
+            Search by category, notes, account, amount, or date across all
+            months
           </DialogDescription>
         </DialogHeader>
 
@@ -93,7 +97,8 @@ export function GlobalSearch({
           {searchQuery && searchResults.length > 0 && (
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground px-2 py-1">
-                Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                Found {searchResults.length} result
+                {searchResults.length !== 1 ? "s" : ""}
               </div>
               {searchResults.map(({ transaction, month }, index) => (
                 <button
@@ -104,13 +109,19 @@ export function GlobalSearch({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{transaction.category}</span>
+                        <span className="font-medium text-sm">
+                          {transaction.category}
+                        </span>
                         <span className="text-xs text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">{month}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {month}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{format(new Date(transaction.date), "dd MMM yyyy")}</span>
+                        <span>
+                          {format(new Date(transaction.date), "dd MMM yyyy")}
+                        </span>
                         <span>•</span>
                         <span>{transaction.account}</span>
                       </div>
@@ -132,7 +143,9 @@ export function GlobalSearch({
           {!searchQuery && (
             <div className="text-center py-12 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p className="text-sm">Start typing to search across all months</p>
+              <p className="text-sm">
+                Start typing to search across all months
+              </p>
             </div>
           )}
         </div>

@@ -1,4 +1,11 @@
-import { format, parse, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
+import {
+  format,
+  parse,
+  startOfMonth,
+  endOfMonth,
+  addMonths,
+  subMonths,
+} from "date-fns";
 
 // Using "MMMM yyyy" format as per user preference (e.g., "May 2024")
 export function getMonthTabName(date: Date): string {
@@ -8,7 +15,7 @@ export function getMonthTabName(date: Date): string {
 export function getMonthDisplayName(date: Date): string {
   // Validate date before formatting
   if (isNaN(date.getTime())) {
-    return 'Invalid Date';
+    return "Invalid Date";
   }
   return format(date, "MMMM yyyy");
 }
@@ -36,7 +43,10 @@ export function isValidMonthTab(tabName: string): boolean {
   }
 }
 
-export function getMonthFromTabName(tabName: string): { start: Date; end: Date } {
+export function getMonthFromTabName(tabName: string): {
+  start: Date;
+  end: Date;
+} {
   const date = parseMonthTabName(tabName);
   return {
     start: startOfMonth(date),
@@ -62,7 +72,7 @@ export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   // Validate date before formatting
   if (isNaN(d.getTime())) {
-    return 'Invalid Date';
+    return "Invalid Date";
   }
   return format(d, "MMM d, yyyy");
 }
@@ -71,7 +81,7 @@ export function formatDateShort(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   // Validate date before formatting
   if (isNaN(d.getTime())) {
-    return 'Invalid Date';
+    return "Invalid Date";
   }
   return format(d, "MMM d");
 }
